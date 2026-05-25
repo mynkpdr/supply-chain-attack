@@ -1,0 +1,686 @@
+<!doctype html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Before the App Runs - JS Supply Chain Attack Data Story</title>
+<meta name="description" content="An interactive single-file HTML data story about JavaScript supply-chain exposure across popular JS and TS packages.">
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='12' fill='%23dba642'/%3E%3Ctext x='32' y='38' text-anchor='middle' font-family='monospace' font-size='24' font-weight='800' fill='%2311100d'%3ESC%3C/text%3E%3C/svg%3E">
+<style>
+:root {
+  color-scheme: dark;
+  --bg: #11100d;
+  --panel: #1a1813;
+  --panel-2: #222018;
+  --ink: #f4efe4;
+  --muted: #b7ad9c;
+  --line: #393327;
+  --line-strong: #5b503e;
+  --amber: #dba642;
+  --teal: #48c4ad;
+  --coral: #e76f51;
+  --blue: #78a6f2;
+  --green: #82bd69;
+  --violet: #b48ad9;
+  --shadow: 0 22px 60px rgba(0, 0, 0, .35);
+  --radius: 8px;
+  --mono: "SFMono-Regular", Consolas, "Liberation Mono", monospace;
+  --serif: Charter, "Bitstream Charter", Georgia, Cambria, serif;
+  --sans: Avenir Next, Avenir, "Trebuchet MS", Verdana, sans-serif;
+}
+:root[data-theme="light"] {
+  color-scheme: light;
+  --bg: #f7f1e6;
+  --panel: #fffaf1;
+  --panel-2: #eee3d0;
+  --ink: #18150f;
+  --muted: #665e51;
+  --line: #d7c8ad;
+  --line-strong: #a99366;
+  --shadow: 0 22px 60px rgba(78, 57, 25, .18);
+}
+* { box-sizing: border-box; }
+html { scroll-behavior: smooth; }
+body {
+  margin: 0;
+  background:
+    linear-gradient(90deg, color-mix(in srgb, var(--line) 26%, transparent) 1px, transparent 1px) 0 0 / 32px 32px,
+    linear-gradient(0deg, color-mix(in srgb, var(--line) 18%, transparent) 1px, transparent 1px) 0 0 / 32px 32px,
+    var(--bg);
+  color: var(--ink);
+  font-family: var(--sans);
+  line-height: 1.5;
+}
+a { color: inherit; text-underline-offset: 3px; }
+button, input, select { font: inherit; }
+button {
+  border: 1px solid var(--line-strong);
+  background: var(--panel-2);
+  color: var(--ink);
+  min-height: 42px;
+  border-radius: var(--radius);
+  padding: .55rem .75rem;
+  cursor: pointer;
+}
+button:hover, button:focus-visible, input:focus-visible, select:focus-visible, a:focus-visible {
+  outline: 2px solid var(--amber);
+  outline-offset: 3px;
+}
+.page-shell { width: min(1180px, calc(100% - 32px)); margin: 0 auto; }
+.topbar {
+  position: sticky;
+  top: 0;
+  z-index: 20;
+  backdrop-filter: blur(14px);
+  background: color-mix(in srgb, var(--bg) 88%, transparent);
+  border-bottom: 1px solid var(--line);
+}
+.topbar-inner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  min-height: 64px;
+}
+.brand {
+  display: flex;
+  align-items: center;
+  gap: .7rem;
+  text-decoration: none;
+}
+.brand-mark {
+  width: 34px;
+  height: 34px;
+  display: grid;
+  place-items: center;
+  border-radius: var(--radius);
+  background: linear-gradient(135deg, var(--amber), var(--coral));
+  color: #1b1207;
+  font: 800 1rem var(--mono);
+}
+.brand span:last-child { color: var(--muted); font-size: .9rem; }
+.nav-actions { display: flex; align-items: center; gap: .55rem; flex-wrap: wrap; justify-content: flex-end; }
+.nav-actions a, .nav-actions button {
+  color: var(--muted);
+  text-decoration: none;
+  font-size: .9rem;
+  padding: .45rem .6rem;
+  min-height: 38px;
+}
+.hero {
+  min-height: calc(100vh - 64px);
+  display: grid;
+  align-items: center;
+  padding: 6rem 0 4rem;
+  position: relative;
+}
+.hero-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.05fr) minmax(320px, .95fr);
+  gap: clamp(2rem, 5vw, 5rem);
+  align-items: center;
+}
+.kicker { color: var(--amber); font-family: var(--mono); text-transform: uppercase; letter-spacing: .08em; font-size: .8rem; }
+h1, h2, h3 { font-family: var(--serif); line-height: 1.04; margin: 0; letter-spacing: 0; }
+h1 { font-size: clamp(3.1rem, 8vw, 7.2rem); max-width: 10ch; }
+h2 { font-size: clamp(2rem, 4.6vw, 4rem); }
+h3 { font-size: clamp(1.2rem, 2vw, 1.65rem); }
+p { color: var(--muted); margin: 0; }
+.lede { font: 1.15rem/1.65 var(--sans); max-width: 62ch; margin-top: 1.25rem; color: color-mix(in srgb, var(--ink) 82%, var(--muted)); }
+.hero-panel {
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: color-mix(in srgb, var(--panel) 96%, transparent);
+  box-shadow: var(--shadow);
+  overflow: hidden;
+}
+.terminal-head { display: flex; gap: .4rem; padding: .8rem; border-bottom: 1px solid var(--line); }
+.dot { width: 10px; height: 10px; border-radius: 50%; background: var(--line-strong); }
+.dot:nth-child(1) { background: var(--coral); }
+.dot:nth-child(2) { background: var(--amber); }
+.dot:nth-child(3) { background: var(--teal); }
+.terminal-body { padding: 1rem; font: .92rem/1.55 var(--mono); color: var(--ink); }
+.terminal-line { display: grid; grid-template-columns: 5.5rem 1fr; gap: 1rem; padding: .42rem 0; border-bottom: 1px solid color-mix(in srgb, var(--line) 50%, transparent); }
+.terminal-line:last-child { border-bottom: 0; }
+.prompt { color: var(--teal); }
+.accent { color: var(--amber); }
+.danger { color: var(--coral); }
+.good { color: var(--green); }
+.section { padding: 5rem 0; border-top: 1px solid var(--line); }
+.section-head { display: grid; grid-template-columns: minmax(0, .8fr) minmax(260px, .5fr); gap: 2rem; margin-bottom: 2rem; align-items: end; }
+.section-head p { max-width: 58ch; }
+.metric-strip { display: grid; grid-template-columns: repeat(4, 1fr); gap: .75rem; margin: 1.6rem 0 2.5rem; }
+.metric {
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--panel);
+  padding: 1rem;
+}
+.metric strong { display: block; font: 700 clamp(1.7rem, 4vw, 3.4rem)/1 var(--serif); }
+.metric span { color: var(--muted); font-size: .9rem; }
+.viz-shell {
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: color-mix(in srgb, var(--panel) 96%, transparent);
+  box-shadow: var(--shadow);
+  padding: 1rem;
+  overflow: hidden;
+}
+.viz-title { display: flex; justify-content: space-between; gap: 1rem; align-items: start; margin-bottom: 1rem; }
+.viz-title p { max-width: 70ch; font-size: .95rem; }
+.controls { display: flex; flex-wrap: wrap; gap: .6rem; align-items: center; margin: .5rem 0 1rem; }
+input, select {
+  min-height: 42px;
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius);
+  background: var(--panel-2);
+  color: var(--ink);
+  padding: .55rem .75rem;
+}
+.heatmap { display: grid; grid-template-columns: minmax(168px, 1fr) repeat(6, minmax(86px, .72fr)); gap: 6px; align-items: stretch; min-width: 760px; }
+.heatmap-wrap { overflow-x: auto; padding-bottom: .5rem; }
+.hm-label, .hm-head, .hm-cell {
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  min-height: 50px;
+  padding: .55rem;
+}
+.hm-head { color: var(--muted); font: .74rem/1.2 var(--mono); text-transform: uppercase; display: flex; align-items: end; }
+.hm-label { background: var(--panel-2); display: grid; align-content: center; gap: .1rem; }
+.hm-label b { font-size: .95rem; }
+.hm-label span { color: var(--muted); font: .74rem var(--mono); }
+.hm-cell {
+  position: relative;
+  text-align: left;
+  color: var(--ink);
+  overflow: hidden;
+}
+.hm-cell b { display: block; font: 700 .9rem var(--mono); }
+.hm-cell span { color: color-mix(in srgb, var(--ink) 72%, var(--muted)); font-size: .75rem; }
+.hm-cell.hit { border-color: var(--coral); box-shadow: inset 0 0 0 2px color-mix(in srgb, var(--coral) 70%, transparent); }
+.hm-cell.fail { background: repeating-linear-gradient(135deg, color-mix(in srgb, var(--line) 80%, transparent), color-mix(in srgb, var(--line) 80%, transparent) 7px, transparent 7px, transparent 14px) !important; }
+.grid-two { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+svg { max-width: 100%; display: block; }
+.chart-svg { width: 100%; height: 420px; }
+.timeline-dot, .network-node, .network-link, .case-button, .evidence-row { transition: opacity .18s ease, transform .18s ease, background .18s ease; }
+.timeline-dot:hover, .network-node:hover { opacity: .78; }
+.case-list { display: flex; flex-wrap: wrap; gap: .5rem; margin-bottom: 1rem; }
+.case-button[aria-pressed="true"] { background: var(--coral); color: #1c0d08; border-color: var(--coral); }
+.diff-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1rem; }
+.diff-pane { border: 1px solid var(--line); border-radius: var(--radius); background: var(--panel-2); padding: 1rem; min-height: 180px; }
+.diff-pane pre { white-space: pre-wrap; word-break: break-word; margin: 0; font: .82rem/1.55 var(--mono); color: var(--ink); }
+.flow-wrap { display: grid; grid-template-columns: 1fr 270px; gap: 1rem; align-items: center; }
+.toggle-row { display: flex; align-items: center; gap: .65rem; border: 1px solid var(--line); border-radius: var(--radius); padding: .8rem; background: var(--panel-2); }
+.toggle-row input { min-height: auto; width: 20px; height: 20px; }
+.table-wrap { overflow: auto; border: 1px solid var(--line); border-radius: var(--radius); }
+table { width: 100%; border-collapse: collapse; min-width: 900px; background: var(--panel); }
+th, td { padding: .7rem .8rem; border-bottom: 1px solid var(--line); text-align: left; vertical-align: top; }
+th { color: var(--muted); font: .78rem var(--mono); text-transform: uppercase; position: sticky; top: 0; background: var(--panel); z-index: 1; }
+td { font-size: .92rem; }
+.badge { display: inline-flex; align-items: center; min-height: 24px; border-radius: 999px; padding: .15rem .55rem; border: 1px solid var(--line-strong); color: var(--muted); font: .76rem var(--mono); }
+.badge.hot { color: #1b0e09; background: var(--coral); border-color: var(--coral); }
+.badge.calm { color: #071713; background: var(--teal); border-color: var(--teal); }
+.badge.warn { color: #1a1305; background: var(--amber); border-color: var(--amber); }
+.source-list { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: .75rem; }
+.source-item { border: 1px solid var(--line); border-radius: var(--radius); padding: 1rem; background: var(--panel); }
+.source-item a { font-weight: 700; }
+.source-item p { margin-top: .35rem; font-size: .92rem; }
+dialog {
+  width: min(760px, calc(100% - 28px));
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius);
+  padding: 0;
+  background: var(--panel);
+  color: var(--ink);
+  box-shadow: var(--shadow);
+}
+dialog::backdrop { background: rgba(0, 0, 0, .62); }
+.dialog-head { display: flex; justify-content: space-between; gap: 1rem; padding: 1rem; border-bottom: 1px solid var(--line); }
+.dialog-body { padding: 1rem; max-height: min(70vh, 640px); overflow: auto; }
+.dialog-body dl { display: grid; grid-template-columns: 150px 1fr; gap: .65rem 1rem; }
+.dialog-body dt { color: var(--muted); font: .76rem var(--mono); text-transform: uppercase; }
+.dialog-body dd { margin: 0; }
+.footer { padding: 3rem 0 5rem; color: var(--muted); }
+@media (max-width: 860px) {
+  .hero-grid, .section-head, .grid-two, .diff-grid, .flow-wrap { grid-template-columns: 1fr; }
+  .metric-strip { grid-template-columns: repeat(2, 1fr); }
+  .source-list { grid-template-columns: 1fr; }
+  .topbar-inner { align-items: start; flex-direction: column; padding: .7rem 0; }
+  .nav-actions { justify-content: start; }
+  h1 { font-size: clamp(3rem, 18vw, 5.2rem); }
+}
+@media (max-width: 520px) {
+  .page-shell { width: min(100% - 22px, 1180px); }
+  .metric-strip { grid-template-columns: 1fr; }
+  .hero { padding-top: 3rem; }
+  .chart-svg { height: 360px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation-duration: .001ms !important; scroll-behavior: auto !important; transition-duration: .001ms !important; }
+}
+</style>
+</head>
+<body>
+<header class="topbar">
+  <div class="page-shell topbar-inner">
+    <a class="brand" href="#top" aria-label="Before the app runs">
+      <span class="brand-mark">SC</span>
+      <span><strong>Before the App Runs</strong><br><span>JS supply-chain exposure, measured</span></span>
+    </a>
+    <nav class="nav-actions" aria-label="Sections">
+      <a href="#matrix">Matrix</a>
+      <a href="#timeline">Timeline</a>
+      <a href="#evidence">Evidence</a>
+      <button id="theme-toggle" type="button" aria-label="Toggle dark mode">Dark</button>
+    </nav>
+  </div>
+</header>
+<main id="top">
+  <section class="hero page-shell">
+    <div class="hero-grid">
+      <div>
+        <div class="kicker">npm install is a trust ceremony</div>
+        <h1>Before the app runs</h1>
+        <p class="lede">A JavaScript supply-chain attack does not need to wait for your code path. It can arrive in a package version, a lifecycle script, a cache entry, or a developer tool that runs with more authority than the app it helps build.</p>
+      </div>
+      <div class="hero-panel" aria-label="Scanner summary">
+        <div class="terminal-head"><span class="dot"></span><span class="dot"></span><span class="dot"></span></div>
+        <div class="terminal-body" id="terminal-summary"></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="section page-shell" id="method">
+    <div class="section-head">
+      <div>
+        <div class="kicker">Method</div>
+        <h2>The scanner looks at state, so the state had to be staged.</h2>
+      </div>
+      <p>The public CLI always scans local package-manager state. For this story, each package/version was resolved into an isolated install root with lifecycle scripts disabled, then scanned with the same advisory engine.</p>
+    </div>
+    <div class="metric-strip" id="metric-strip"></div>
+  </section>
+
+  <section class="section page-shell" id="matrix">
+    <div class="section-head">
+      <div>
+        <div class="kicker">Scan matrix</div>
+        <h2>Most rows were clean. The risk was concentrated in windows.</h2>
+      </div>
+      <p>Each cell is one exact package version tied to a popular JS/TS GitHub project. Larger dependency surfaces gave attackers more places to hide, while the sharpest matches clustered around poisoned release windows.</p>
+    </div>
+    <div class="viz-shell">
+      <div class="viz-title">
+        <div><h3>Dependency surface by milestone</h3><p>Lockfile-only package counts across selected publish-time milestones.</p></div>
+      </div>
+      <div class="controls">
+        <input id="matrix-search" type="search" placeholder="Filter packages" autocomplete="off" inputmode="search" aria-label="Filter packages">
+        <select id="campaign-filter" aria-label="Campaign filter"></select>
+      </div>
+      <div class="heatmap-wrap"><div id="heatmap" class="heatmap"></div></div>
+    </div>
+  </section>
+
+  <section class="section page-shell" id="timeline">
+    <div class="section-head">
+      <div>
+        <div class="kicker">Incident timeline</div>
+        <h2>Publishing access became the pressure point.</h2>
+      </div>
+      <p>The scanner snapshot tracks eight advisories, from Nx and Rspack through Axios and Mini Shai-Hulud. The largest campaigns were not single vulnerable functions; they were poisoned release events.</p>
+    </div>
+    <div class="grid-two">
+      <div class="viz-shell">
+        <div class="viz-title"><h3>Advisory volume</h3></div>
+        <svg id="timeline-chart" class="chart-svg" role="img" aria-label="Timeline of supply-chain advisories"></svg>
+      </div>
+      <div class="viz-shell">
+        <div class="viz-title"><h3>Blast-radius network</h3><p>Scanner matches connect campaigns to package versions observed in the staged matrix.</p></div>
+        <svg id="network-chart" class="chart-svg" role="img" aria-label="Campaign to package network"></svg>
+      </div>
+    </div>
+  </section>
+
+  <section class="section page-shell" id="registry">
+    <div class="section-head">
+      <div>
+        <div class="kicker">Registry/source split</div>
+        <h2>The package is the crime scene, not always the repo.</h2>
+      </div>
+      <p>Maintainer-account and token compromises can publish a poisoned artifact under a trusted name. A GitHub tag can look ordinary while the npm registry serves a version teams should treat as exposed.</p>
+    </div>
+    <div class="viz-shell">
+      <div class="case-list" id="case-list"></div>
+      <div class="diff-grid">
+        <div class="diff-pane"><h3>Source view</h3><pre id="source-pane"></pre></div>
+        <div class="diff-pane"><h3>Registry view</h3><pre id="registry-pane"></pre></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="section page-shell" id="lifecycle">
+    <div class="section-head">
+      <div>
+        <div class="kicker">Lifecycle scripts</div>
+        <h2>The dangerous moment can be installation itself.</h2>
+      </div>
+      <p>The scanner also looks for postinstall scripts with network-fetch behavior. This run used lockfile-only resolution, so it did not execute scripts or extract all package manifests.</p>
+    </div>
+    <div class="viz-shell flow-wrap">
+      <svg id="flow-chart" class="chart-svg" role="img" aria-label="Install lifecycle flow"></svg>
+      <div class="toggle-row">
+        <input id="script-toggle" type="checkbox" checked aria-label="Ignore lifecycle scripts">
+        <label for="script-toggle"><strong>ignore-scripts</strong><br><span class="badge calm">enabled in this study</span></label>
+      </div>
+    </div>
+  </section>
+
+  <section class="section page-shell" id="evidence">
+    <div class="section-head">
+      <div>
+        <div class="kicker">Evidence table</div>
+        <h2>Every red mark has a package, a version, and a source.</h2>
+      </div>
+      <p>Matches are exposure evidence from staged lockfiles. They are not claims that attacker code executed on a developer machine.</p>
+    </div>
+    <div class="viz-shell">
+      <div class="controls">
+        <input id="table-search" type="search" placeholder="Search evidence" autocomplete="off" aria-label="Search evidence">
+        <button id="reset-filters" type="button">Reset</button>
+      </div>
+      <div class="table-wrap"><table id="evidence-table"></table></div>
+    </div>
+  </section>
+
+  <section class="section page-shell" id="sources">
+    <div class="section-head">
+      <div>
+        <div class="kicker">Sources</div>
+        <h2>The caveat is part of the finding.</h2>
+      </div>
+      <p>The embedded advisory snapshot is dated 2026-05-12. A clean result means no match against that snapshot and method, not proof of a clean machine or ecosystem.</p>
+    </div>
+    <div class="source-list" id="source-list"></div>
+  </section>
+</main>
+<footer class="footer page-shell">Generated from isolated package-lock-only scans on 2026-05-22. Final artifact: this single HTML file.</footer>
+
+<dialog id="detail-dialog" aria-labelledby="dialog-title">
+  <div class="dialog-head"><h3 id="dialog-title">Detail</h3><button id="dialog-close" type="button" aria-label="Close dialog">Close</button></div>
+  <div class="dialog-body" id="dialog-body"></div>
+</dialog>
+
+<script type="application/json" id="data-json">{"generatedAt":"2026-05-22T10:10:55.711Z","scanner":{"name":"supply-chain-attack","version":"0.1.10","snapshotDate":"2026-05-12","advisoryCount":8,"artifactCount":438},"method":{"unit":"npm package artifacts representing the named GitHub JS/TS projects","scanMode":"package-lock-only resolution with lifecycle scripts disabled","note":"The public CLI scans machine state; this data uses the same scanner engine against isolated staged install roots, matching the plan while keeping final HTML self-contained."},"rows":[{"repo":"facebook/react","pkg":"react","version":"16.3.0","date":"2018-03-29T20:16:22.948Z","milestone":"oldest-baseline","label":"first stable version after 2018 began","count":19,"hits":0,"scripts":0,"status":"resolved_lockfile","findings":[]},{"repo":"facebook/react","pkg":"react","version":"18.2.0","date":"2022-06-14T19:46:38.369Z","milestone":"pre-2024","label":"latest stable before 2024","count":3,"hits":0,"scripts":0,"status":"resolved_lockfile","findings":[]},{"repo":"facebook/react","pkg":"react","version":"19.1.1","date":"2025-07-28T14:55:41.076Z","milestone":"pre-nx-2025-08-27","label":"latest stable before Nx incident date","count":1,"hits":0,"scripts":0,"status":"resolved_lockfile","findings":[]},{"repo":"facebook/react","pkg":"react","version":"19.0.4","date":"2026-01-26T18:24:47.720Z","milestone":"pre-axios-2026-03-31","label":"latest stable before Axios publish window","count":1,"hits":0,"scripts":0,"status":"resolved_lockfile","findings":[]},{"repo":"facebook/react","pkg":"react","version":"19.0.6","date":"2026-05-06T16:18:02.201Z","milestone":"pre-tanstack-2026-05-11","label":"latest stable before TanStack publish window","count":1,"hits":0,"scripts":0,"status":"resolved_lockfile","findings":[]},{"repo":"angular/angular","pkg":"@angular/core","version":"5.1.3","date":"2018-01-04T00:02:02.654Z","milestone":"oldest-baseline","label":"first stable version after 2018 began","count":2,"hits":0,"scripts":0,"status":"resolved_lockfile","findings":[]},{"repo":"angular/angular","pkg":"@angular/core","version":"17.0.8","date":"2023-12-21T14:26:55.470Z","milestone":"pre-2024","label":"latest stable before 2024","count":2,"hits":0,"scripts":0,"status":"resolved_lockfile","findings":[]},{"repo":"angular/angular","pkg":"@angular/core","version":"20.2.1","date":"2025-08-21T10:53:27.069Z","milestone":"pre-nx-2025-08-27","label":"latest stable before Nx incident date","count":2,"hits":0,"scripts":0,"status":"resolved_lockfile","findings":[]},{"repo":"angular/angular","pkg":"@angular/core","version":"21.2.6","date":"2026-03-25T22:42:36.541Z","milestone":"pre-axios-2026-03-31","label":"latest stable before Axios publish window","count":2,"hits":0,"scripts":0,"status":"resolved_lockfile","findings":[]},{"repo":"angular/angular","pkg":"@angular/core","version":"21.2.12","date":"2026-05-06T22:48:14.326Z","milestone":"pre-tanstack-2026-05-11","label":"latest stable before TanStack publish window","count":2,"hits":0,"scripts":0,"status":"resolved_lockfile","findings":[]},{"repo":"angular/angular","pkg":"@angular/core","version":"21.2.14","date":"2026-05-20T22:35:16.059Z","milestone":"latest","label":"latest stable at collection time","count":2,"hits":0,"scripts":0,"status":"resolved_lockfile","findings":[]},{"repo":"vuejs/core","pkg":"vue","version":"2.5.14","date":"2018-03-09T21:42:13.463Z","milestone":"oldest-baseline","label":"first stable version after 2018 began","count":1,"hits":0,"scripts":0,"status":"resolved_lockfile","findings":[]},{"repo":"vuejs/core","pkg":"vue","version":"3.4.3","date":"2023-12-30T13:35:12.170Z","milestone":"pre-2024","label":"latest stable before 2024","count":23,"hits":0,"scripts":0,"status":"resolved_lockfile","findings":[]},{"repo":"vuejs/core","pkg":"vue","version":"3.5.20","date":"2025-08-25T07:11:55.545Z","milestone":"pre-nx-2025-08-27","label":"latest stable before Nx incident date","count":23,"hits":0,"scripts":0,"status":"resolved_lockfile","findings":[]},{"repo":"vuejs/core","pkg":"vue","version":"3.5.31","date":"2026-03-25T09:23:21.753Z","milestone":"pre-axios-2026-03-31","label":"latest stable before Axios publish window","count":23,"hits":0,"scripts":0,"status":"resolved_lockfile","findings":[]},{"repo":"vuejs/core","pkg":"vue","version":"3.5.34","date":"2026-05-06T07:20:20.149Z","milestone":"pre-tanstack-2026-05-11","label":"latest stable before TanStack publish window","count":23,"hits":0,"scripts":0,"status":"resolved_lockfile","findings":[]},{"repo":"vercel/next.js","pkg":"next","version":"4.2.2","date":"2018-01-09T19:42:48.845Z","milestone":"oldest-baseline","label":"first stable version after 2018 began","count":816,"hits":1,"scripts":0,"status":"resolved_lockfile","findings":[{"pkg":"handlebars","version":"4.7.9","advisory":"SOCKET-mini-shai-hulud-expansion-2026-05","campaign":"Mini Shai-Hulud expansion into AI/devtool ecosystem packages","source":"https://socket.dev/supply-chain-attacks/mini-shai-hulud","confidence":"lockfile = possible resolution","evidence":"handlebars@4.7.9 resolved while staging next@4.2.2"}]},{"repo":"vercel/next.js","pkg":"next","version":"14.0.4","date":"2023-12-07T21:21:59.205Z","milestone":"pre-2024","label":"latest stable before 2024","count":25,"hits":0,"scripts":0,"status":"resolved_lockfile","findings":[]},{"repo":"vercel/next.js","pkg":"next","version":"15.5.2","date":"2025-08-26T22:30:58.940Z","milestone":"pre-nx-2025-08-27","label":"latest stable before Nx incident date","count":48,"hits":0,"scripts":0,"status":"resolved_lockfile","findings":[]},{"repo":"vercel/next.js","pkg":"next","version":"16.2.1","date":"2026-03-20T23:31:11.148Z","milestone":"pre-axios-2026-03-31","label":"latest stable before Axios publish window","count":49,"hits":0,"scripts":0,"status":"resolved_lockfile","findings":[]},{"repo":"vercel/next.js","pkg":"next","version":"15.5.18","date":"2026-05-07T19:30:28.216Z","milestone":"pre-tanstack-2026-05-11","label":"latest stable before TanStack publish window","count":48,"hits":0,"scripts":0,"status":"resolved_lockfile","findings":[]},{"repo":"microsoft/TypeScript","pkg":"typescript","version":"2.7.1","date":"2018-01-31T17:22:12.576Z","milestone":"oldest-baseline","label":"first stable version after 2018 began","count":1,"hits":0,"scripts":0,"status":"resolved_lockfile","findings":[]},{"repo":"microsoft/TypeScript","pkg":"typescript","version":"5.3.3","date":"2023-12-06T19:07:51.067Z","milestone":"pre-2024","label":"latest stable before 2024","count":1,"hits":0,"scripts":0,"status":"resolved_lockfile","findings":[]},{"repo":"microsoft/TypeScript","pkg":"typescript","version":"5.9.2","date":"2025-07-31T17:54:06.216Z","milestone":"pre-nx-2025-08-27","label":"latest stable before Nx incident date","count":1,"hits":0,"scripts":0,"status":"resolved_lockfile","findings":[]},{"repo":"microsoft/TypeScript","pkg":"typescript","version":"6.0.2","date":"2026-03-23T16:14:45.521Z","milestone":"pre-axios-2026-03-31","label":"latest stable before Axios publish window","count":1,"hits":0,"scripts":0,"status":"resolved_lockfile","findings":[]},{"repo":"microsoft/TypeScript","pkg":"typescript","version":"6.0.3","date":"2026-04-16T23:38:27.905Z","milestone":"pre-tanstack-2026-05-11","label":"latest stable before TanStack publish window","count":1,"hits":0,"scripts":0,"status":"resolved_lockfile","findings":[]},{"repo":"vitejs/vite","pkg":"vite","version":"0.1.0","date":"2020-04-21T05:05:15.591Z","milestone":"oldest-baseline","label":"first stable version after 2018 began","count":57,"hits":0,"scripts":0,"status":"resolved_lockfile","findings":[]},{"repo":"vitejs/vite","pkg":"vite","version":"5.0.10","date":"2023-12-15T15:53:11.369Z","milestone":"pre-2024","label":"latest stable before 2024","count":57,"hits":0,"scripts":0,"status":"resolved_lockfile","findings":[]},{"repo":"vitejs/vite","pkg":"vite","version":"7.1.3","date":"2025-08-19T06:09:41.795Z","milestone":"pre-nx-2025-08-27","label":"latest stable before Nx incident date","count":63,"hits":0,"scripts":0,"status":"resolved_lockfile","findings":[]},{"repo":"vitejs/vite","pkg":"vite","version":"8.0.3","date":"2026-03-26T06:14:20.929Z","milestone":"pre-axios-2026-03-31","label":"latest stable before Axios publish window","count":43,"hits":0,"scripts":0,"status":"resolved_lockfile","findings":[]},{"repo":"vitejs/vite","pkg":"vite","version":"8.0.12","date":"2026-05-11T07:11:13.780Z","milestone":"pre-tanstack-2026-05-11","label":"latest stable before TanStack publish window","count":46,"hits":0,"scripts":0,"status":"resolved_lockfile","findings":[]},{"repo":"vitejs/vite","pkg":"vite","version":"8.0.14","date":"2026-05-21T07:16:03.179Z","milestone":"latest","label":"latest stable at collection time","count":46,"hits":0,"scripts":0,"status":"resolved_lockfile","findings":[]},{"repo":"sveltejs/svelte","pkg":"svelte","version":"1.50.1","date":"2018-01-02T15:02:48.766Z","milestone":"oldest-baseline","label":"first stable version after 2018 began","count":1,"hits":0,"scripts":0,"status":"resolved_lockfile","findings":[]},{"repo":"sveltejs/svelte","pkg":"svelte","version":"4.2.8","date":"2023-11-30T10:18:05.891Z","milestone":"pre-2024","label":"latest stable before 2024","count":19,"hits":0,"scripts":0,"status":"resolved_lockfile","findings":[]},{"repo":"sveltejs/svelte","pkg":"svelte","version":"5.38.5","date":"2025-08-26T18:08:27.577Z","milestone":"pre-nx-2025-08-27","label":"latest stable before Nx incident date","count":18,"hits":0,"scripts":0,"status":"resolved_lockfile","findings":[]},{"repo":"sveltejs/svelte","pkg":"svelte","version":"5.55.1","date":"2026-03-29T20:58:44.673Z","milestone":"pre-axios-2026-03-31","label":"latest stable before Axios publish window","count":20,"hits":0,"scripts":0,"status":"resolved_lockfile","findings":[]},{"repo":"sveltejs/svelte","pkg":"svelte","version":"5.55.5","date":"2026-04-23T23:48:46.167Z","milestone":"pre-tanstack-2026-05-11","label":"latest stable before TanStack publish window","count":20,"hits":0,"scripts":0,"status":"resolved_lockfile","findings":[]},{"repo":"sveltejs/svelte","pkg":"svelte","version":"5.55.9","date":"2026-05-20T10:08:31.977Z","milestone":"latest","label":"latest stable at collection time","count":20,"hits":0,"scripts":0,"status":"resolved_lockfile","findings":[]},{"repo":"expressjs/express","pkg":"express","version":"4.16.3","date":"2018-03-12T17:50:14.119Z","milestone":"oldest-baseline","label":"first stable version after 2018 began","count":50,"hits":0,"scripts":0,"status":"resolved_lockfile","findings":[]},{"repo":"expressjs/express","pkg":"express","version":"4.18.2","date":"2022-10-08T20:14:32.495Z","milestone":"pre-2024","label":"latest stable before 2024","count":68,"hits":0,"scripts":0,"status":"resolved_lockfile","findings":[]},{"repo":"expressjs/express","pkg":"express","version":"5.1.0","date":"2025-03-31T14:01:22.509Z","milestone":"pre-nx-2025-08-27","label":"latest stable before Nx incident date","count":66,"hits":0,"scripts":0,"status":"resolved_lockfile","findings":[]},{"repo":"expressjs/express","pkg":"express","version":"4.22.1","date":"2025-12-01T20:50:41.122Z","milestone":"pre-axios-2026-03-31","label":"latest stable before Axios publish window","count":69,"hits":0,"scripts":0,"status":"resolved_lockfile","findings":[]},{"repo":"expressjs/express","pkg":"express","version":"4.22.2","date":"2026-05-11T18:50:00.007Z","milestone":"pre-tanstack-2026-05-11","label":"latest stable before TanStack publish window","count":68,"hits":0,"scripts":0,"status":"resolved_lockfile","findings":[]},{"repo":"axios/axios","pkg":"axios","version":"0.18.0","date":"2018-02-19T23:28:54.151Z","milestone":"oldest-baseline","label":"first stable version after 2018 began","count":3,"hits":0,"scripts":0,"status":"resolved_lockfile","findings":[]},{"repo":"axios/axios","pkg":"axios","version":"1.6.3","date":"2023-12-26T23:16:17.756Z","milestone":"pre-2024","label":"latest stable before 2024","count":23,"hits":0,"scripts":0,"status":"resolved_lockfile","findings":[]},{"repo":"axios/axios","pkg":"axios","version":"0.30.1","date":"2025-08-04T18:21:01.791Z","milestone":"pre-nx-2025-08-27","label":"latest stable before Nx incident date","count":23,"hits":0,"scripts":0,"status":"resolved_lockfile","findings":[]},{"repo":"axios/axios","pkg":"axios","version":"1.14.0","date":"2026-03-27T19:01:40.915Z","milestone":"pre-axios-2026-03-31","label":"latest stable before Axios publish window","count":23,"hits":0,"scripts":0,"status":"resolved_lockfile","findings":[]},{"repo":"axios/axios","pkg":"axios","version":"0.32.0","date":"2026-05-04T18:08:25.798Z","milestone":"pre-tanstack-2026-05-11","label":"latest stable before TanStack publish window","count":23,"hits":0,"scripts":0,"status":"resolved_lockfile","findings":[]},{"repo":"axios/axios","pkg":"axios","version":"1.16.1","date":"2026-05-13T16:22:46.037Z","milestone":"latest","label":"latest stable at collection time","count":27,"hits":0,"scripts":0,"status":"resolved_lockfile","findings":[]},{"repo":"babel/babel","pkg":"@babel/core","version":"7.0.0","date":"2018-08-27T21:45:05.866Z","milestone":"oldest-baseline","label":"first stable version after 2018 began","count":33,"hits":0,"scripts":0,"status":"resolved_lockfile","findings":[]},{"repo":"babel/babel","pkg":"@babel/core","version":"7.23.7","date":"2023-12-29T20:01:38.244Z","milestone":"pre-2024","label":"latest stable before 2024","count":39,"hits":0,"scripts":0,"status":"resolved_lockfile","findings":[]},{"repo":"babel/babel","pkg":"@babel/core","version":"7.28.3","date":"2025-08-14T12:36:21.762Z","milestone":"pre-nx-2025-08-27","label":"latest stable before Nx incident date","count":39,"hits":0,"scripts":0,"status":"resolved_lockfile","findings":[]},{"repo":"babel/babel","pkg":"@babel/core","version":"7.29.0","date":"2026-01-31T17:39:22.681Z","milestone":"pre-axios-2026-03-31","label":"latest stable before Axios publish window","count":39,"hits":0,"scripts":0,"status":"resolved_lockfile","findings":[]},{"repo":"webpack/webpack","pkg":"webpack","version":"3.11.0","date":"2018-02-10T14:41:42.397Z","milestone":"oldest-baseline","label":"first stable version after 2018 began","count":357,"hits":0,"scripts":0,"status":"resolved_lockfile","findings":[]},{"repo":"webpack/webpack","pkg":"webpack","version":"5.89.0","date":"2023-10-13T22:30:16.118Z","milestone":"pre-2024","label":"latest stable before 2024","count":82,"hits":0,"scripts":0,"status":"resolved_lockfile","findings":[]},{"repo":"webpack/webpack","pkg":"webpack","version":"5.101.3","date":"2025-08-18T12:56:05.462Z","milestone":"pre-nx-2025-08-27","label":"latest stable before Nx incident date","count":75,"hits":0,"scripts":0,"status":"resolved_lockfile","findings":[]},{"repo":"webpack/webpack","pkg":"webpack","version":"5.105.4","date":"2026-03-03T16:29:53.144Z","milestone":"pre-axios-2026-03-31","label":"latest stable before Axios publish window","count":75,"hits":0,"scripts":0,"status":"resolved_lockfile","findings":[]},{"repo":"webpack/webpack","pkg":"webpack","version":"5.106.2","date":"2026-04-15T11:44:11.053Z","milestone":"pre-tanstack-2026-05-11","label":"latest stable before TanStack publish window","count":73,"hits":0,"scripts":0,"status":"resolved_lockfile","findings":[]},{"repo":"webpack/webpack","pkg":"webpack","version":"5.107.1","date":"2026-05-21T14:29:30.133Z","milestone":"latest","label":"latest stable at collection time","count":71,"hits":0,"scripts":0,"status":"resolved_lockfile","findings":[]},{"repo":"storybookjs/storybook","pkg":"storybook","version":"5.1.11","date":"2019-09-09T10:05:52.221Z","milestone":"oldest-baseline","label":"first stable version after 2018 began","count":256,"hits":0,"scripts":0,"status":"resolved_lockfile","findings":[]},{"repo":"storybookjs/storybook","pkg":"storybook","version":"7.6.6","date":"2023-12-19T13:44:26.284Z","milestone":"pre-2024","label":"latest stable before 2024","count":618,"hits":1,"scripts":0,"status":"resolved_lockfile","findings":[{"pkg":"handlebars","version":"4.7.9","advisory":"SOCKET-mini-shai-hulud-expansion-2026-05","campaign":"Mini Shai-Hulud expansion into AI/devtool ecosystem packages","source":"https://socket.dev/supply-chain-attacks/mini-shai-hulud","confidence":"lockfile = possible resolution","evidence":"handlebars@4.7.9 resolved while staging storybook@7.6.6"}]},{"repo":"storybookjs/storybook","pkg":"storybook","version":"9.1.3","date":"2025-08-21T11:24:11.215Z","milestone":"pre-nx-2025-08-27","label":"latest stable before Nx incident date","count":75,"hits":0,"scripts":0,"status":"resolved_lockfile","findings":[]},{"repo":"storybookjs/storybook","pkg":"storybook","version":"10.3.3","date":"2026-03-23T13:34:54.671Z","milestone":"pre-axios-2026-03-31","label":"latest stable before Axios publish window","count":74,"hits":0,"scripts":0,"status":"resolved_lockfile","findings":[]},{"repo":"storybookjs/storybook","pkg":"storybook","version":"10.3.6","date":"2026-04-29T14:02:57.716Z","milestone":"pre-tanstack-2026-05-11","label":"latest stable before TanStack publish window","count":75,"hits":0,"scripts":0,"status":"resolved_lockfile","findings":[]},{"repo":"storybookjs/storybook","pkg":"storybook","version":"10.4.0","date":"2026-05-14T08:13:05.045Z","milestone":"latest","label":"latest stable at collection time","count":123,"hits":0,"scripts":0,"status":"resolved_lockfile","findings":[]},{"repo":"eslint/eslint","pkg":"eslint","version":"4.15.0","date":"2018-01-07T02:00:39.537Z","milestone":"oldest-baseline","label":"first stable version after 2018 began","count":134,"hits":0,"scripts":0,"status":"resolved_lockfile","findings":[]},{"repo":"eslint/eslint","pkg":"eslint","version":"8.56.0","date":"2023-12-15T22:55:11.833Z","milestone":"pre-2024","label":"latest stable before 2024","count":99,"hits":0,"scripts":0,"status":"resolved_lockfile","findings":[]},{"repo":"eslint/eslint","pkg":"eslint","version":"9.34.0","date":"2025-08-22T20:39:49.318Z","milestone":"pre-nx-2025-08-27","label":"latest stable before Nx incident date","count":86,"hits":0,"scripts":0,"status":"resolved_lockfile","findings":[]},{"repo":"eslint/eslint","pkg":"eslint","version":"10.1.0","date":"2026-03-20T15:31:41.125Z","milestone":"pre-axios-2026-03-31","label":"latest stable before Axios publish window","count":69,"hits":0,"scripts":0,"status":"resolved_lockfile","findings":[]},{"repo":"eslint/eslint","pkg":"eslint","version":"10.3.0","date":"2026-05-01T15:39:41.045Z","milestone":"pre-tanstack-2026-05-11","label":"latest stable before TanStack publish window","count":69,"hits":0,"scripts":0,"status":"resolved_lockfile","findings":[]},{"repo":"eslint/eslint","pkg":"eslint","version":"10.4.0","date":"2026-05-15T14:11:13.606Z","milestone":"latest","label":"latest stable at collection time","count":69,"hits":0,"scripts":0,"status":"resolved_lockfile","findings":[]},{"repo":"tailwindlabs/tailwindcss","pkg":"tailwindcss","version":"0.4.1","date":"2018-01-22T15:11:24.234Z","milestone":"oldest-baseline","label":"first stable version after 2018 began","count":229,"hits":0,"scripts":0,"status":"resolved_lockfile","findings":[]},{"repo":"tailwindlabs/tailwindcss","pkg":"tailwindcss","version":"3.4.0","date":"2023-12-19T17:34:26.927Z","milestone":"pre-2024","label":"latest stable before 2024","count":75,"hits":0,"scripts":0,"status":"resolved_lockfile","findings":[]},{"repo":"tailwindlabs/tailwindcss","pkg":"tailwindcss","version":"4.1.12","date":"2025-08-14T12:54:38.729Z","milestone":"pre-nx-2025-08-27","label":"latest stable before Nx incident date","count":1,"hits":0,"scripts":0,"status":"resolved_lockfile","findings":[]},{"repo":"tailwindlabs/tailwindcss","pkg":"tailwindcss","version":"4.2.2","date":"2026-03-18T16:12:50.031Z","milestone":"pre-axios-2026-03-31","label":"latest stable before Axios publish window","count":1,"hits":0,"scripts":0,"status":"resolved_lockfile","findings":[]},{"repo":"tailwindlabs/tailwindcss","pkg":"tailwindcss","version":"4.3.0","date":"2026-05-08T20:25:26.174Z","milestone":"pre-tanstack-2026-05-11","label":"latest stable before TanStack publish window","count":1,"hits":0,"scripts":0,"status":"resolved_lockfile","findings":[]},{"repo":"nestjs/nest","pkg":"@nestjs/core","version":"4.5.5","date":"2018-01-02T11:12:12.711Z","milestone":"oldest-baseline","label":"first stable version after 2018 began","count":60,"hits":0,"scripts":0,"status":"resolved_lockfile","findings":[]},{"repo":"nestjs/nest","pkg":"@nestjs/core","version":"10.3.0","date":"2023-12-18T08:42:41.012Z","milestone":"pre-2024","label":"latest stable before 2024","count":19,"hits":0,"scripts":0,"status":"resolved_lockfile","findings":[]},{"repo":"nestjs/nest","pkg":"@nestjs/core","version":"11.1.6","date":"2025-08-07T06:59:17.457Z","milestone":"pre-nx-2025-08-27","label":"latest stable before Nx incident date","count":9,"hits":0,"scripts":0,"status":"resolved_lockfile","findings":[]},{"repo":"nestjs/nest","pkg":"@nestjs/core","version":"11.1.17","date":"2026-03-16T10:32:17.497Z","milestone":"pre-axios-2026-03-31","label":"latest stable before Axios publish window","count":9,"hits":0,"scripts":0,"status":"resolved_lockfile","findings":[]},{"repo":"nestjs/nest","pkg":"@nestjs/core","version":"11.1.19","date":"2026-04-13T07:52:27.396Z","milestone":"pre-tanstack-2026-05-11","label":"latest stable before TanStack publish window","count":9,"hits":0,"scripts":0,"status":"resolved_lockfile","findings":[]},{"repo":"nestjs/nest","pkg":"@nestjs/core","version":"11.1.23","date":"2026-05-21T18:14:35.779Z","milestone":"latest","label":"latest stable at collection time","count":9,"hits":0,"scripts":0,"status":"resolved_lockfile","findings":[]},{"repo":"axios/axios","pkg":"axios","version":"1.14.1","date":null,"milestone":"incident-anchor","label":"axios malicious release","count":1,"hits":1,"scripts":0,"status":"resolution_failed","findings":[{"pkg":"axios","version":"1.14.1","advisory":"GHSA-fw8c-xr5c-95f9","campaign":"Axios maintainer account compromise pulled malicious plain-crypto-js dependency","source":"https://socket.dev/blog/axios-npm-package-compromised","confidence":"lockfile = possible resolution","evidence":"axios@1.14.1 resolved while staging axios@1.14.1"}]},{"repo":"axios/axios","pkg":"axios","version":"0.30.4","date":null,"milestone":"incident-anchor","label":"axios malicious v0 release","count":1,"hits":1,"scripts":0,"status":"resolution_failed","findings":[{"pkg":"axios","version":"0.30.4","advisory":"GHSA-fw8c-xr5c-95f9","campaign":"Axios maintainer account compromise pulled malicious plain-crypto-js dependency","source":"https://socket.dev/blog/axios-npm-package-compromised","confidence":"lockfile = possible resolution","evidence":"axios@0.30.4 resolved while staging axios@0.30.4"}]},{"repo":"nrwl/nx","pkg":"nx","version":"21.5.0","date":null,"milestone":"incident-anchor","label":"nx s1ngularity advisory","count":1,"hits":1,"scripts":0,"status":"resolution_failed","findings":[{"pkg":"nx","version":"21.5.0","advisory":"SOCKET-nx-2025-08","campaign":"Nx s1ngularity supply-chain compromise","source":"https://socket.dev/blog/nx-packages-compromised","confidence":"lockfile = possible resolution","evidence":"nx@21.5.0 resolved while staging nx@21.5.0"}]},{"repo":"nrwl/nx","pkg":"@nx/devkit","version":"21.5.0","date":null,"milestone":"incident-anchor","label":"nx s1ngularity advisory","count":1,"hits":1,"scripts":0,"status":"resolution_failed","findings":[{"pkg":"@nx/devkit","version":"21.5.0","advisory":"SOCKET-nx-2025-08","campaign":"Nx s1ngularity supply-chain compromise","source":"https://socket.dev/blog/nx-packages-compromised","confidence":"lockfile = possible resolution","evidence":"@nx/devkit@21.5.0 resolved while staging @nx/devkit@21.5.0"}]},{"repo":"web-infra-dev/rspack","pkg":"@rspack/core","version":"1.1.7","date":null,"milestone":"incident-anchor","label":"rspack advisory","count":1,"hits":1,"scripts":0,"status":"resolution_failed","findings":[{"pkg":"@rspack/core","version":"1.1.7","advisory":"SOCKET-rspack-2025-12","campaign":"Rspack npm packages compromised","source":"https://socket.dev/blog/rspack-npm-packages-compromised","confidence":"lockfile = possible resolution","evidence":"@rspack/core@1.1.7 resolved while staging @rspack/core@1.1.7"}]},{"repo":"web-infra-dev/rspack","pkg":"@rspack/cli","version":"1.1.7","date":null,"milestone":"incident-anchor","label":"rspack advisory","count":1,"hits":1,"scripts":0,"status":"resolution_failed","findings":[{"pkg":"@rspack/cli","version":"1.1.7","advisory":"SOCKET-rspack-2025-12","campaign":"Rspack npm packages compromised","source":"https://socket.dev/blog/rspack-npm-packages-compromised","confidence":"lockfile = possible resolution","evidence":"@rspack/cli@1.1.7 resolved while staging @rspack/cli@1.1.7"}]},{"repo":"TanStack/router","pkg":"@tanstack/react-router","version":"1.166.6","date":null,"milestone":"incident-anchor","label":"tanstack embedded advisory","count":12,"hits":1,"scripts":0,"status":"resolved_lockfile","findings":[{"pkg":"@tanstack/react-router","version":"1.166.6","advisory":"GHSA-g7cv-rxg3-hmpx","campaign":"TanStack npm packages compromised in Mini Shai-Hulud","source":"https://github.com/TanStack/router/security/advisories/GHSA-g7cv-rxg3-hmpx","confidence":"lockfile = possible resolution","evidence":"@tanstack/react-router@1.166.6 resolved while staging @tanstack/react-router@1.166.6"}]},{"repo":"TanStack/router","pkg":"@tanstack/router-core","version":"1.166.4","date":null,"milestone":"incident-anchor","label":"tanstack embedded advisory","count":8,"hits":1,"scripts":0,"status":"resolved_lockfile","findings":[{"pkg":"@tanstack/router-core","version":"1.166.4","advisory":"GHSA-g7cv-rxg3-hmpx","campaign":"TanStack npm packages compromised in Mini Shai-Hulud","source":"https://github.com/TanStack/router/security/advisories/GHSA-g7cv-rxg3-hmpx","confidence":"lockfile = possible resolution","evidence":"@tanstack/router-core@1.166.4 resolved while staging @tanstack/router-core@1.166.4"}]},{"repo":"TanStack/router","pkg":"@tanstack/react-query","version":"5.90.12","date":null,"milestone":"incident-anchor","label":"tanstack embedded advisory","count":2,"hits":2,"scripts":0,"status":"resolved_lockfile","findings":[{"pkg":"@tanstack/query-core","version":"5.90.12","advisory":"GHSA-g7cv-rxg3-hmpx","campaign":"TanStack npm packages compromised in Mini Shai-Hulud","source":"https://github.com/TanStack/router/security/advisories/GHSA-g7cv-rxg3-hmpx","confidence":"lockfile = possible resolution","evidence":"@tanstack/query-core@5.90.12 resolved while staging @tanstack/react-query@5.90.12"},{"pkg":"@tanstack/react-query","version":"5.90.12","advisory":"GHSA-g7cv-rxg3-hmpx","campaign":"TanStack npm packages compromised in Mini Shai-Hulud","source":"https://github.com/TanStack/router/security/advisories/GHSA-g7cv-rxg3-hmpx","confidence":"lockfile = possible resolution","evidence":"@tanstack/react-query@5.90.12 resolved while staging @tanstack/react-query@5.90.12"}]}],"advisories":[{"id":"GHSA-g7cv-rxg3-hmpx","title":"TanStack npm packages compromised in Mini Shai-Hulud","severity":"critical","published":"2026-05-11","source":"https://github.com/TanStack/router/security/advisories/GHSA-g7cv-rxg3-hmpx","artifactCount":84,"summary":"A compromised npm token published malicious versions of 42 TanStack packages containing credential exfiltration behavior."},{"id":"SOCKET-mini-shai-hulud-2026-04","title":"Mini Shai-Hulud campaign affecting SAP CAP, Intercom, Lightning, Mistral and related packages","severity":"critical","published":"2026-04-29","source":"https://socket.dev/supply-chain-attacks/mini-shai-hulud","artifactCount":11,"summary":"Socket tracked Mini Shai-Hulud packages that exfiltrate secrets and attempt persistence through developer tooling files."},{"id":"SOCKET-mini-shai-hulud-expansion-2026-05","title":"Mini Shai-Hulud expansion into AI/devtool ecosystem packages","severity":"critical","published":"2026-05-12","source":"https://socket.dev/supply-chain-attacks/mini-shai-hulud","artifactCount":263,"summary":"Socket and Snyk reporting showed the Mini Shai-Hulud wave expanding into Mistral, UiPath, Squawk, OpenSearch and related packages."},{"id":"GHSA-fw8c-xr5c-95f9","title":"Axios maintainer account compromise pulled malicious plain-crypto-js dependency","severity":"critical","published":"2026-03-31","source":"https://socket.dev/blog/axios-npm-package-compromised","artifactCount":9,"summary":"Two malicious axios versions injected a trojanized plain-crypto-js dependency that ran during postinstall."},{"id":"SOCKET-namastex-canisterworm-2026-04","title":"Namastex.ai packages compromised by CanisterWorm","severity":"critical","published":"2026-04-21","source":"https://socket.dev/supply-chain-attacks/canisterworm","artifactCount":15,"summary":"AI and developer tooling packages were compromised with credential theft and worm behavior."},{"id":"SOCKET-canistersprawl-2026-05","title":"CanisterSprawl Brand-Squat Packages","severity":"critical","published":"2026-05-08","source":"https://socket.dev/supply-chain-attacks/canistersprawl","artifactCount":22,"summary":"Socket tracked brand-squatted npm packages imitating OpenAI, Anthropic, Meta, Vercel, and developer tooling brands."},{"id":"SOCKET-rspack-2025-12","title":"Rspack npm packages compromised","severity":"critical","published":"2025-12-19","source":"https://socket.dev/blog/rspack-npm-packages-compromised","artifactCount":2,"summary":"Malicious Rspack releases contained postinstall malware targeting developer machines and CI environments."},{"id":"SOCKET-nx-2025-08","title":"Nx s1ngularity supply-chain compromise","severity":"critical","published":"2025-08-27","source":"https://socket.dev/blog/nx-packages-compromised","artifactCount":32,"summary":"Malicious Nx versions attempted credential theft from developer environments."}],"sources":[{"name":"supply-chain-attack npm","url":"https://www.npmjs.com/package/supply-chain-attack","detail":"Scanner package metadata, usage, privacy model, and snapshot coverage."},{"name":"supply-chain-attack GitHub","url":"https://github.com/zonko-ai/supply-chain-attack","detail":"Source repository and embedded advisory implementation."},{"name":"TanStack GHSA","url":"https://github.com/TanStack/router/security/advisories/GHSA-g7cv-rxg3-hmpx","detail":"Security advisory for compromised TanStack npm releases."},{"name":"TanStack postmortem","url":"https://tanstack.com/blog/npm-supply-chain-compromise-postmortem","detail":"Maintainer writeup on root cause and remediation."},{"name":"Socket Mini Shai-Hulud","url":"https://socket.dev/supply-chain-attacks/mini-shai-hulud","detail":"Campaign reporting used by the scanner snapshot."},{"name":"Socket Axios report","url":"https://socket.dev/blog/axios-npm-package-compromised","detail":"Axios maintainer account compromise and malicious plain-crypto-js dependency."},{"name":"npm install docs","url":"https://docs.npmjs.com/cli-documentation/install","detail":"Lifecycle-script and install behavior reference."},{"name":"npm trusted publishers","url":"https://docs.npmjs.com/trusted-publishers/","detail":"Registry-side hardening with OIDC trusted publishing."}]}</script>
+<script>
+// @ts-check
+(() => {
+  const DATA = JSON.parse(document.getElementById('data-json').textContent);
+  const $ = (selector, root = document) => root.querySelector(selector);
+  const $$ = (selector, root = document) => Array.from(root.querySelectorAll(selector));
+  const milestones = [
+    ['oldest-baseline', '2018 floor'],
+    ['pre-2024', 'Pre 2024'],
+    ['pre-nx-2025-08-27', 'Pre Nx'],
+    ['pre-axios-2026-03-31', 'Pre Axios'],
+    ['pre-tanstack-2026-05-11', 'Pre TanStack'],
+    ['latest', 'Latest'],
+  ];
+  const state = Object.fromEntries(new URLSearchParams(location.hash.slice(1)));
+  const rows = DATA.rows;
+  const advisories = DATA.advisories;
+  const evidenceRows = rows.flatMap((row) => row.findings.map((finding) => ({ row, finding })));
+  const incidentRows = rows.filter((row) => row.findings.length);
+  const maxCount = Math.max(...rows.map((row) => row.count));
+  const fmt = new Intl.NumberFormat('en-US');
+  const shortDate = (value) => value ? new Date(value).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : 'unknown';
+  const monthDay = (value) => value ? new Date(value).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : 'unknown';
+  const esc = (value) => String(value ?? '').replace(/[&<>"']/g, (char) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[char]));
+  const setHash = () => {
+    const params = new URLSearchParams(Object.entries(state).filter(([, value]) => value));
+    history.replaceState(null, '', params.toString() ? '#' + params.toString() : location.pathname);
+  };
+  const campaignName = (id) => advisories.find((advisory) => advisory.id === id)?.title || id;
+  const campaignOptions = () => ['all', ...new Set(evidenceRows.map(({ finding }) => finding.advisory))];
+
+  function init() {
+    applyTheme(state.theme || 'dark');
+    $('#matrix-search').value = state.q || '';
+    $('#table-search').value = state.q || '';
+    renderTerminal();
+    renderMetrics();
+    renderCampaignFilter();
+    renderHeatmap();
+    renderTimeline();
+    renderNetwork();
+    renderCasePanel(state.case || incidentRows[0]?.pkg || incidentRows[0]?.packageName || '');
+    renderFlow();
+    renderEvidenceTable();
+    renderSources();
+    bindEvents();
+  }
+
+  function bindEvents() {
+    $('#theme-toggle').addEventListener('click', () => applyTheme(document.documentElement.dataset.theme === 'dark' ? 'light' : 'dark'));
+    $('#matrix-search').addEventListener('input', (event) => {
+      state.q = event.target.value.trim();
+      $('#table-search').value = state.q;
+      setHash(); renderHeatmap(); renderEvidenceTable();
+    });
+    $('#table-search').addEventListener('input', (event) => {
+      state.q = event.target.value.trim();
+      $('#matrix-search').value = state.q;
+      setHash(); renderHeatmap(); renderEvidenceTable();
+    });
+    $('#campaign-filter').addEventListener('change', (event) => {
+      state.campaign = event.target.value === 'all' ? '' : event.target.value;
+      setHash(); renderHeatmap(); renderNetwork(); renderEvidenceTable();
+    });
+    $('#reset-filters').addEventListener('click', () => {
+      state.q = ''; state.campaign = '';
+      $('#matrix-search').value = ''; $('#table-search').value = ''; $('#campaign-filter').value = 'all';
+      setHash(); renderHeatmap(); renderNetwork(); renderEvidenceTable();
+    });
+    $('#script-toggle').addEventListener('change', renderFlow);
+    $('#dialog-close').addEventListener('click', () => $('#detail-dialog').close());
+  }
+
+  function applyTheme(theme) {
+    document.documentElement.dataset.theme = theme;
+    state.theme = theme === 'dark' ? '' : theme;
+    $('#theme-toggle').textContent = theme === 'dark' ? 'Dark' : 'Light';
+    setHash();
+  }
+
+  function renderTerminal() {
+    const totalPackages = rows.reduce((sum, row) => sum + row.count, 0);
+    const totalHits = rows.reduce((sum, row) => sum + row.hits, 0);
+    const failed = rows.filter((row) => row.status !== 'resolved_lockfile').length;
+    $('#terminal-summary').innerHTML = [
+      ['scan', '<span class="accent">' + fmt.format(rows.length) + '</span> staged package/version rows'],
+      ['surface', '<span class="accent">' + fmt.format(totalPackages) + '</span> resolved package/version pairs'],
+      ['matches', '<span class="danger">' + fmt.format(totalHits) + '</span> advisory matches in lockfiles'],
+      ['snapshot', DATA.scanner.name + '@' + DATA.scanner.version + ' / ' + DATA.scanner.snapshotDate],
+      ['safety', '<span class="good">ignore-scripts</span> and isolated install roots'],
+      ['gaps', fmt.format(failed) + ' registry versions no longer resolved'],
+    ].map(([key, value]) => '<div class="terminal-line"><span class="prompt">' + key + '</span><span>' + value + '</span></div>').join('');
+  }
+
+  function renderMetrics() {
+    const metrics = [
+      [rows.length, 'package/version rows staged'],
+      [rows.reduce((sum, row) => sum + row.count, 0), 'resolved package/version pairs'],
+      [DATA.scanner.artifactCount, 'known bad artifacts in scanner snapshot'],
+      [evidenceRows.length, 'matches found in staged rows'],
+    ];
+    $('#metric-strip').innerHTML = metrics.map(([value, label]) => '<div class="metric"><strong>' + fmt.format(value) + '</strong><span>' + label + '</span></div>').join('');
+  }
+
+  function renderCampaignFilter() {
+    $('#campaign-filter').innerHTML = campaignOptions().map((id) => '<option value="' + esc(id) + '">' + esc(id === 'all' ? 'All campaigns' : campaignName(id)) + '</option>').join('');
+    $('#campaign-filter').value = state.campaign || 'all';
+  }
+
+  function rowPasses(row) {
+    const q = (state.q || '').toLowerCase();
+    const campaign = state.campaign;
+    const text = [row.repo, row.pkg, row.version, row.milestone, ...row.findings.map((f) => f.campaign + ' ' + f.pkg + ' ' + f.version)].join(' ').toLowerCase();
+    if (q && !text.includes(q)) return false;
+    if (campaign && !row.findings.some((finding) => finding.advisory === campaign)) return false;
+    return true;
+  }
+
+  function renderHeatmap() {
+    const packages = [...new Set(rows.map((row) => row.pkg))].filter((pkg) => rows.some((row) => row.pkg === pkg && rowPasses(row)));
+    const cells = ['<div></div>', ...milestones.map(([, label]) => '<div class="hm-head">' + label + '</div>')];
+    for (const pkg of packages) {
+      const first = rows.find((row) => row.pkg === pkg);
+      cells.push('<div class="hm-label"><b>' + esc(pkg) + '</b><span>' + esc(first.repo) + '</span></div>');
+      for (const [key] of milestones) {
+        const row = rows.find((item) => item.pkg === pkg && item.milestone === key);
+        if (!row) { cells.push('<div class="hm-cell fail"><span>missing</span></div>'); continue; }
+        const intensity = Math.max(.08, Math.log1p(row.count) / Math.log1p(maxCount));
+        const bg = row.hits ? 'color-mix(in srgb, var(--coral) ' + Math.round(26 + intensity * 50) + '%, var(--panel))' : 'color-mix(in srgb, var(--teal) ' + Math.round(8 + intensity * 46) + '%, var(--panel))';
+        const classes = ['hm-cell', row.hits ? 'hit' : '', row.status !== 'resolved_lockfile' ? 'fail' : ''].join(' ');
+        cells.push('<button type="button" class="' + classes + '" style="background:' + bg + '" data-row="' + esc(row.pkg + '@' + row.version + ':' + row.milestone) + '"><b>' + esc(row.version) + '</b><span>' + fmt.format(row.count) + ' pkgs' + (row.hits ? ' / ' + row.hits + ' hit' : '') + '</span></button>');
+      }
+    }
+    $('#heatmap').innerHTML = cells.join('');
+    $$('.hm-cell[data-row]').forEach((cell) => cell.addEventListener('click', () => {
+      const [pkgVersion, milestone] = cell.dataset.row.split(':');
+      const at = pkgVersion.lastIndexOf('@');
+      const pkg = pkgVersion.slice(0, at);
+      const version = pkgVersion.slice(at + 1);
+      openRow(rows.find((row) => row.pkg === pkg && row.version === version && row.milestone === milestone));
+    }));
+  }
+
+  function renderTimeline() {
+    const svg = $('#timeline-chart');
+    const w = 760, h = 420, pad = 54;
+    const dates = advisories.map((a) => new Date(a.published).getTime());
+    const min = Math.min(...dates), max = Math.max(...dates);
+    const maxArtifacts = Math.max(...advisories.map((a) => a.artifactCount));
+    const x = (date) => pad + ((new Date(date).getTime() - min) / Math.max(1, max - min)) * (w - pad * 2);
+    const y = (count) => h - pad - (Math.log1p(count) / Math.log1p(maxArtifacts)) * (h - pad * 2);
+    const ticks = [advisories[0], advisories[Math.floor(advisories.length / 2)], advisories[advisories.length - 1]];
+    svg.setAttribute('viewBox', '0 0 ' + w + ' ' + h);
+    svg.innerHTML = '<line x1="' + pad + '" y1="' + (h - pad) + '" x2="' + (w - pad) + '" y2="' + (h - pad) + '" stroke="var(--line-strong)"/>' +
+      advisories.map((a) => {
+        const cx = x(a.published), cy = y(a.artifactCount), r = 7 + Math.sqrt(a.artifactCount) * 1.2;
+        return '<g><line x1="' + cx + '" y1="' + (h - pad) + '" x2="' + cx + '" y2="' + cy + '" stroke="var(--line)"/><circle class="timeline-dot" data-id="' + esc(a.id) + '" cx="' + cx + '" cy="' + cy + '" r="' + r + '" fill="' + (a.id === state.campaign ? 'var(--coral)' : 'var(--amber)') + '" opacity=".88"/><text x="' + (cx + 10) + '" y="' + (cy - r - 7) + '" fill="var(--ink)" font-size="14">' + fmt.format(a.artifactCount) + '</text></g>';
+      }).join('') +
+      ticks.map((a, i) => '<text x="' + ([pad, w / 2, w - pad][i]) + '" y="' + (h - 18) + '" text-anchor="' + (i === 0 ? 'start' : i === ticks.length - 1 ? 'end' : 'middle') + '" fill="var(--muted)" font-size="14">' + esc(monthDay(a.published)) + '</text>').join('') +
+      '<text x="' + pad + '" y="34" fill="var(--muted)" font-size="15">tracked artifacts per advisory</text>';
+    $$('.timeline-dot', svg).forEach((dot) => dot.addEventListener('click', () => openAdvisory(advisories.find((a) => a.id === dot.dataset.id))));
+  }
+
+  function renderNetwork() {
+    const svg = $('#network-chart');
+    const w = 760, h = 420;
+    svg.setAttribute('viewBox', '0 0 ' + w + ' ' + h);
+    const filtered = state.campaign ? evidenceRows.filter(({ finding }) => finding.advisory === state.campaign) : evidenceRows;
+    const campaigns = [...new Set(filtered.map(({ finding }) => finding.advisory))];
+    const packages = [...new Set(filtered.map(({ finding }) => finding.pkg + '@' + finding.version))];
+    const cpos = new Map(campaigns.map((id, i) => [id, { x: 165, y: 74 + i * (280 / Math.max(1, campaigns.length - 1 || 1)) }]));
+    const ppos = new Map(packages.map((id, i) => [id, { x: 590, y: 48 + i * (318 / Math.max(1, packages.length - 1 || 1)) }]));
+    const links = filtered.map(({ finding }) => ({ from: cpos.get(finding.advisory), to: ppos.get(finding.pkg + '@' + finding.version), finding }));
+    svg.innerHTML = links.map((link) => '<path class="network-link" d="M ' + link.from.x + ' ' + link.from.y + ' C 310 ' + link.from.y + ', 410 ' + link.to.y + ', ' + link.to.x + ' ' + link.to.y + '" fill="none" stroke="var(--line-strong)" stroke-width="1.2" opacity=".55"/>').join('') +
+      campaigns.map((id) => '<g class="network-node" data-campaign="' + esc(id) + '"><circle cx="' + cpos.get(id).x + '" cy="' + cpos.get(id).y + '" r="19" fill="var(--coral)"/><text x="' + (cpos.get(id).x + 30) + '" y="' + (cpos.get(id).y + 5) + '" fill="var(--ink)" font-size="15">' + esc(campaignName(id).slice(0, 28)) + '</text></g>').join('') +
+      packages.map((id) => '<g class="network-node" data-pkg="' + esc(id) + '"><circle cx="' + ppos.get(id).x + '" cy="' + ppos.get(id).y + '" r="13" fill="var(--teal)"/><text x="' + (ppos.get(id).x - 20) + '" y="' + (ppos.get(id).y + 5) + '" text-anchor="end" fill="var(--ink)" font-size="14">' + esc(id.slice(0, 34)) + '</text></g>').join('');
+    $$('.network-node[data-campaign]', svg).forEach((node) => node.addEventListener('click', () => openAdvisory(advisories.find((a) => a.id === node.dataset.campaign))));
+  }
+
+  function renderCasePanel(preferred) {
+    const cases = incidentRows;
+    const selected = cases.find((row) => (row.pkg === preferred || row.packageName === preferred || row.pkg + '@' + row.version === preferred)) || cases[0];
+    if (!selected) return;
+    state.case = selected.pkg + '@' + selected.version;
+    setHash();
+    $('#case-list').innerHTML = cases.map((row) => '<button class="case-button" type="button" aria-pressed="' + (row === selected) + '" data-case="' + esc(row.pkg + '@' + row.version) + '">' + esc(row.pkg + '@' + row.version) + '</button>').join('');
+    $$('.case-button').forEach((button) => button.addEventListener('click', () => renderCasePanel(button.dataset.case)));
+    const finding = selected.findings[0];
+    $('#source-pane').textContent = [
+      'repository: ' + selected.repo,
+      'selected ref: ' + selected.version,
+      'scan mode: ' + DATA.method.scanMode,
+      'claim boundary: source history alone is not the evidence',
+      'date: ' + shortDate(selected.date),
+    ].join('\n');
+    $('#registry-pane').textContent = [
+      'package: ' + finding.pkg + '@' + finding.version,
+      'campaign: ' + finding.campaign,
+      'advisory: ' + finding.advisory,
+      'confidence: ' + finding.confidence,
+      'evidence: ' + finding.evidence,
+    ].join('\n');
+  }
+
+  function renderFlow() {
+    const svg = $('#flow-chart');
+    const ignore = $('#script-toggle').checked;
+    svg.setAttribute('viewBox', '0 0 760 420');
+    const scriptColor = ignore ? 'var(--green)' : 'var(--coral)';
+    const opacity = ignore ? '.35' : '1';
+    svg.innerHTML = [
+      flowBox(40, 150, 'registry', 'trusted name'),
+      flowBox(230, 150, 'resolver', 'lockfile'),
+      flowBox(420, 150, 'postinstall', ignore ? 'blocked' : 'network fetch'),
+      flowBox(610, 150, 'machine', ignore ? 'no script run' : 'tokens at risk'),
+      arrow(180, 190, 225, 190, 'var(--line-strong)', 1),
+      arrow(370, 190, 415, 190, scriptColor, opacity),
+      arrow(560, 190, 605, 190, scriptColor, opacity),
+      '<text x="40" y="66" fill="var(--muted)" font-size="15">Lifecycle scripts are useful automation until an attacker owns the publish step.</text>',
+      '<text x="420" y="285" fill="' + scriptColor + '" font-size="16" font-weight="700">' + (ignore ? 'Study mode: scripts disabled.' : 'Counterfactual: install hook can run before application code.') + '</text>',
+    ].join('');
+  }
+  function flowBox(x, y, title, sub) {
+    return '<rect x="' + x + '" y="' + y + '" width="145" height="82" rx="8" fill="var(--panel-2)" stroke="var(--line-strong)"/><text x="' + (x + 16) + '" y="' + (y + 34) + '" fill="var(--ink)" font-size="18" font-weight="700">' + title + '</text><text x="' + (x + 16) + '" y="' + (y + 58) + '" fill="var(--muted)" font-size="13">' + sub + '</text>';
+  }
+  function arrow(x1, y1, x2, y2, color, opacity) {
+    return '<path d="M ' + x1 + ' ' + y1 + ' L ' + x2 + ' ' + y2 + '" stroke="' + color + '" opacity="' + opacity + '" stroke-width="3" marker-end="url(#none)"/><path d="M ' + x2 + ' ' + y2 + ' l -10 -6 v 12 z" fill="' + color + '" opacity="' + opacity + '"/>';
+  }
+
+  function renderEvidenceTable() {
+    const q = (state.q || '').toLowerCase();
+    const campaign = state.campaign;
+    const filtered = evidenceRows.filter(({ row, finding }) => {
+      const text = [row.repo, row.pkg, row.version, finding.pkg, finding.version, finding.campaign, finding.advisory].join(' ').toLowerCase();
+      return (!q || text.includes(q)) && (!campaign || finding.advisory === campaign);
+    });
+    $('#evidence-table').innerHTML = '<thead><tr><th>Row</th><th>Finding</th><th>Campaign</th><th>Confidence</th><th>Source</th></tr></thead><tbody>' +
+      (filtered.length ? filtered.map(({ row, finding }) => '<tr class="evidence-row"><td><button type="button" data-row-open="' + esc(row.pkg + '@' + row.version + ':' + row.milestone) + '">' + esc(row.pkg + '@' + row.version) + '</button><br><span class="badge">' + esc(row.milestone) + '</span></td><td><strong>' + esc(finding.pkg + '@' + finding.version) + '</strong><br>' + esc(finding.evidence) + '</td><td>' + esc(finding.campaign) + '<br><span class="badge hot">' + esc(finding.advisory) + '</span></td><td>' + esc(finding.confidence) + '</td><td><a href="' + esc(finding.source) + '" target="_blank" rel="noreferrer">source</a></td></tr>').join('') : '<tr><td colspan="5">No evidence rows match the active filters.</td></tr>') + '</tbody>';
+    $$('[data-row-open]').forEach((button) => button.addEventListener('click', () => {
+      const [pkgVersion, milestone] = button.dataset.rowOpen.split(':');
+      const at = pkgVersion.lastIndexOf('@');
+      openRow(rows.find((row) => row.pkg === pkgVersion.slice(0, at) && row.version === pkgVersion.slice(at + 1) && row.milestone === milestone));
+    }));
+  }
+
+  function renderSources() {
+    $('#source-list').innerHTML = DATA.sources.map((source) => '<div class="source-item"><a href="' + esc(source.url) + '" target="_blank" rel="noreferrer">' + esc(source.name) + '</a><p>' + esc(source.detail) + '</p></div>').join('');
+  }
+
+  function openRow(row) {
+    if (!row) return;
+    const findings = row.findings.length ? row.findings.map((finding) => '<p><strong>' + esc(finding.pkg + '@' + finding.version) + '</strong><br>' + esc(finding.campaign) + '<br><a href="' + esc(finding.source) + '" target="_blank" rel="noreferrer">advisory source</a></p>').join('') : '<p>No scanner match in this staged lockfile.</p>';
+    openDialog(row.pkg + '@' + row.version, '<dl><dt>Repository</dt><dd>' + esc(row.repo) + '</dd><dt>Milestone</dt><dd>' + esc(row.label || row.milestone) + '</dd><dt>Date</dt><dd>' + esc(shortDate(row.date)) + '</dd><dt>Resolved packages</dt><dd>' + fmt.format(row.count) + '</dd><dt>Status</dt><dd>' + esc(row.status) + '</dd><dt>Findings</dt><dd>' + findings + '</dd></dl>');
+  }
+
+  function openAdvisory(advisory) {
+    if (!advisory) return;
+    const matches = evidenceRows.filter(({ finding }) => finding.advisory === advisory.id);
+    openDialog(advisory.title, '<dl><dt>Published</dt><dd>' + esc(shortDate(advisory.published)) + '</dd><dt>Tracked artifacts</dt><dd>' + fmt.format(advisory.artifactCount) + '</dd><dt>Snapshot matches</dt><dd>' + fmt.format(matches.length) + '</dd><dt>Summary</dt><dd>' + esc(advisory.summary) + '</dd><dt>Source</dt><dd><a href="' + esc(advisory.source) + '" target="_blank" rel="noreferrer">' + esc(advisory.source) + '</a></dd></dl>');
+  }
+
+  function openDialog(title, body) {
+    $('#dialog-title').textContent = title;
+    $('#dialog-body').innerHTML = body;
+    $('#detail-dialog').showModal();
+    $('#dialog-close').focus();
+  }
+
+  init();
+})();
+</script>
+</body>
+</html>

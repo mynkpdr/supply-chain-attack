@@ -1,0 +1,1434 @@
+<!doctype html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Supply Chain Attack Atlas</title>
+<meta name="description" content="An interactive visual data story about confirmed JavaScript supply-chain attack indicators and staged package exposure.">
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%2064%2064'%3E%3Crect%20width='64'%20height='64'%20rx='14'%20fill='%230b1114'/%3E%3Ccircle%20cx='31'%20cy='31'%20r='16'%20fill='none'%20stroke='%232ee6bf'%20stroke-width='4'/%3E%3Cpath%20d='M31%2011v40M11%2031h40'%20stroke='%23ff6d57'%20stroke-width='4'%20stroke-linecap='round'/%3E%3C/svg%3E">
+<style>
+:root {
+  color-scheme: dark;
+  --bg: #091013;
+  --paper: #0f171a;
+  --panel: #141e22;
+  --panel-2: #1b282d;
+  --panel-3: #26363c;
+  --ink: #f5f6ef;
+  --muted: #b7c0bd;
+  --soft: #7f908d;
+  --line: #294048;
+  --line-strong: #43606a;
+  --red: #ff6d57;
+  --red-soft: rgba(255, 109, 87, .14);
+  --teal: #2ee6bf;
+  --teal-soft: rgba(46, 230, 191, .13);
+  --amber: #f4b84a;
+  --amber-soft: rgba(244, 184, 74, .14);
+  --blue: #79a7ff;
+  --blue-soft: rgba(121, 167, 255, .14);
+  --violet: #c88cff;
+  --green: #86d86c;
+  --shadow: 0 30px 90px rgba(0, 0, 0, .36);
+  --radius: 14px;
+  --font-ui: "Aptos Display", "Segoe UI Variable Display", "SF Pro Display", "Helvetica Neue", Arial, sans-serif;
+  --font-text: "Aptos", "Segoe UI Variable", "SF Pro Text", "Helvetica Neue", Arial, sans-serif;
+  --font-mono: "Cascadia Code", "SFMono-Regular", "Menlo", "Consolas", monospace;
+}
+[data-theme="light"] {
+  color-scheme: light;
+  --bg: #eef5f2;
+  --paper: #fbfdfb;
+  --panel: #ffffff;
+  --panel-2: #eef5f2;
+  --panel-3: #dfe9e6;
+  --ink: #101819;
+  --muted: #52615f;
+  --soft: #7d8d89;
+  --line: #d2dfdc;
+  --line-strong: #9fb3ad;
+  --red: #d94f3e;
+  --red-soft: rgba(217, 79, 62, .12);
+  --teal: #108d7c;
+  --teal-soft: rgba(16, 141, 124, .12);
+  --amber: #b97812;
+  --amber-soft: rgba(185, 120, 18, .13);
+  --blue: #386fca;
+  --blue-soft: rgba(56, 111, 202, .13);
+  --shadow: 0 28px 80px rgba(35, 55, 58, .14);
+}
+* { box-sizing: border-box; }
+html { scroll-behavior: smooth; }
+body {
+  margin: 0;
+  min-height: 100vh;
+  background:
+    radial-gradient(circle at 14% -6%, color-mix(in srgb, var(--teal) 18%, transparent), transparent 26rem),
+    radial-gradient(circle at 90% 4%, color-mix(in srgb, var(--red) 15%, transparent), transparent 28rem),
+    linear-gradient(90deg, color-mix(in srgb, var(--line) 26%, transparent) 1px, transparent 1px),
+    linear-gradient(0deg, color-mix(in srgb, var(--line) 22%, transparent) 1px, transparent 1px),
+    var(--bg);
+  background-size: auto, auto, 48px 48px, 48px 48px, auto;
+  color: var(--ink);
+  font-family: var(--font-text);
+  line-height: 1.55;
+}
+body::selection { background: var(--amber-soft); }
+a { color: inherit; text-underline-offset: 3px; }
+button, input, select { font: inherit; }
+button { cursor: pointer; }
+button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible, [tabindex="0"]:focus-visible {
+  outline: 2px solid var(--amber);
+  outline-offset: 3px;
+}
+h1, h2, h3 { margin: 0; font-family: var(--font-ui); line-height: .98; letter-spacing: -.035em; }
+h1 { max-width: 11ch; font-size: clamp(4.2rem, 9vw, 8.6rem); font-weight: 850; }
+h2 { font-size: clamp(2.55rem, 5vw, 5rem); font-weight: 820; }
+h3 { font-size: 1.35rem; font-weight: 780; letter-spacing: -.02em; }
+p { margin: 0; color: var(--muted); }
+code, pre { font-family: var(--font-mono); }
+.shell { width: min(1220px, calc(100% - 2rem)); margin-inline: auto; }
+.wide { width: min(1440px, calc(100% - 2rem)); margin-inline: auto; }
+#progress { position: fixed; inset: 0 auto auto 0; width: 0; height: 3px; z-index: 200; background: linear-gradient(90deg, var(--teal), var(--amber), var(--red)); }
+#announcer { position: fixed; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); }
+.topbar {
+  position: sticky;
+  top: 0;
+  z-index: 120;
+  border-bottom: 1px solid var(--line);
+  background: color-mix(in srgb, var(--bg) 86%, transparent);
+  backdrop-filter: blur(20px);
+}
+.topbar-inner { min-height: 72px; display: flex; align-items: center; justify-content: space-between; gap: 1rem; }
+.brand { display: flex; gap: .8rem; align-items: center; text-decoration: none; }
+.brand-mark {
+  width: 42px;
+  height: 42px;
+  border-radius: 12px;
+  display: grid;
+  place-items: center;
+  background: linear-gradient(135deg, var(--teal), var(--amber));
+  color: #081114;
+  font: 900 .82rem var(--font-mono);
+}
+.brand strong { display: block; letter-spacing: -.02em; }
+.brand span span { display: block; color: var(--soft); font-size: .84rem; margin-top: .05rem; }
+.nav { display: flex; align-items: center; gap: .45rem; flex-wrap: wrap; }
+.nav a, .nav button, .button, .chip, .tab-button {
+  min-height: 42px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--panel) 84%, transparent);
+  color: var(--ink);
+  padding: .5rem .85rem;
+  text-decoration: none;
+}
+.nav a { color: var(--muted); }
+.nav a:hover, .nav button:hover, .button:hover, .chip:hover, .tab-button:hover { border-color: var(--line-strong); background: var(--panel-2); color: var(--ink); }
+.hero { min-height: calc(100svh - 72px); display: grid; align-items: center; padding: 4.5rem 0 3rem; }
+.hero-grid { display: grid; grid-template-columns: minmax(0, 1.05fr) minmax(380px, .95fr); gap: clamp(2rem, 5vw, 5rem); align-items: center; }
+.kicker {
+  display: inline-flex;
+  align-items: center;
+  gap: .55rem;
+  color: var(--teal);
+  font: 850 .78rem var(--font-mono);
+  text-transform: uppercase;
+  letter-spacing: .08em;
+  margin-bottom: 1.1rem;
+}
+.kicker::before { content: ""; width: .55rem; height: .55rem; border-radius: 50%; background: var(--teal); box-shadow: 0 0 0 6px var(--teal-soft); }
+.lede { max-width: 64ch; margin-top: 1.3rem; font-size: 1.18rem; color: color-mix(in srgb, var(--ink) 74%, var(--muted)); }
+.hero-actions { display: flex; flex-wrap: wrap; gap: .8rem; margin-top: 1.7rem; }
+.button.primary { background: var(--red); border-color: var(--red); color: white; font-weight: 760; }
+.button.ghost { background: transparent; }
+.hero-panel {
+  border: 1px solid var(--line);
+  border-radius: 24px;
+  background: linear-gradient(180deg, color-mix(in srgb, var(--panel) 94%, transparent), color-mix(in srgb, var(--panel-2) 86%, transparent));
+  box-shadow: var(--shadow);
+  padding: 1.1rem;
+  overflow: hidden;
+}
+.mini-orbit { width: 100%; height: 420px; display: block; }
+.receipt-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: .75rem; margin-top: .85rem; }
+.receipt {
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  background: color-mix(in srgb, var(--paper) 88%, transparent);
+  padding: .85rem;
+}
+.receipt b { display: block; color: var(--ink); font: 850 1.4rem var(--font-ui); letter-spacing: -.03em; }
+.receipt span { display: block; color: var(--muted); font-size: .86rem; margin-top: .1rem; }
+.section { padding: 6rem 0; border-top: 1px solid var(--line); scroll-margin-top: 110px; }
+.section.compact { padding: 4.5rem 0; }
+.section-head { display: grid; grid-template-columns: minmax(0, 1fr) minmax(280px, .42fr); align-items: end; gap: 2rem; margin-bottom: 2rem; }
+.section-head p { max-width: 62ch; font-size: 1.02rem; }
+.chapter {
+  display: flex;
+  align-items: center;
+  gap: .7rem;
+  margin-bottom: 1rem;
+  color: var(--red);
+  font: 900 .78rem var(--font-mono);
+  text-transform: uppercase;
+  letter-spacing: .08em;
+}
+.chapter span:first-child {
+  min-width: 2.2rem;
+  min-height: 2.2rem;
+  border: 1px solid var(--line-strong);
+  border-radius: 10px;
+  display: grid;
+  place-items: center;
+  color: var(--ink);
+}
+.metric-strip { display: grid; grid-template-columns: repeat(4, 1fr); gap: .85rem; margin-top: 1.8rem; }
+.metric {
+  border: 1px solid var(--line);
+  border-radius: 18px;
+  background: var(--panel);
+  padding: 1rem;
+}
+.metric strong { display: block; color: var(--ink); font: 850 2.2rem var(--font-ui); letter-spacing: -.04em; line-height: 1; }
+.metric span { display: block; margin-top: .35rem; color: var(--muted); font-size: .9rem; }
+.note {
+  margin-top: 1rem;
+  border: 1px solid color-mix(in srgb, var(--amber) 45%, var(--line));
+  border-radius: 18px;
+  background: var(--amber-soft);
+  padding: 1rem 1.1rem;
+  color: color-mix(in srgb, var(--ink) 80%, var(--amber));
+}
+.atlas-shell {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 360px;
+  gap: 1rem;
+  align-items: stretch;
+}
+.viz-card, .side-card, .panel, .drawer-card {
+  border: 1px solid var(--line);
+  border-radius: 24px;
+  background: color-mix(in srgb, var(--panel) 94%, transparent);
+  box-shadow: var(--shadow);
+  overflow: hidden;
+}
+.viz-toolbar {
+  min-height: 74px;
+  border-bottom: 1px solid var(--line);
+  background: color-mix(in srgb, var(--panel-2) 80%, transparent);
+  padding: 1rem;
+  display: flex;
+  gap: .8rem;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+}
+.toolbar-copy h3 { margin-bottom: .15rem; }
+.toolbar-copy p { font-size: .9rem; }
+.controls { display: flex; gap: .55rem; align-items: center; flex-wrap: wrap; }
+input[type="search"], select {
+  min-height: 42px;
+  width: min(100%, 290px);
+  border: 1px solid var(--line-strong);
+  border-radius: 999px;
+  background: var(--paper);
+  color: var(--ink);
+  padding: .54rem .9rem;
+}
+.chip[aria-pressed="true"], .tab-button[aria-pressed="true"] {
+  border-color: var(--red);
+  background: var(--red-soft);
+  color: var(--red);
+  font-weight: 760;
+}
+.constellation-wrap { position: relative; overflow-x: auto; }
+.constellation { width: 100%; min-width: 900px; height: 650px; display: block; }
+.node-link { stroke: color-mix(in srgb, var(--line-strong) 60%, transparent); stroke-dasharray: 5 7; }
+.campaign-node { cursor: pointer; transition: opacity .18s ease, transform .18s ease; }
+.campaign-node:hover { opacity: .86; }
+.sample-node { cursor: pointer; transition: r .15s ease, opacity .15s ease; }
+.sample-node:hover { opacity: 1; }
+.side-card { display: grid; grid-template-rows: auto 1fr; }
+.side-head { padding: 1rem; border-bottom: 1px solid var(--line); background: color-mix(in srgb, var(--panel-2) 70%, transparent); }
+.side-body { padding: 1rem; display: grid; align-content: start; gap: 1rem; }
+.selected-title { display: grid; gap: .45rem; }
+.selected-title h3 { font-size: 1.75rem; }
+.pill-row { display: flex; gap: .45rem; flex-wrap: wrap; }
+.pill {
+  display: inline-flex;
+  align-items: center;
+  min-height: 28px;
+  border: 1px solid var(--line-strong);
+  border-radius: 999px;
+  padding: .15rem .55rem;
+  color: var(--muted);
+  font: .74rem var(--font-mono);
+}
+.pill.hot { border-color: color-mix(in srgb, var(--red) 65%, var(--line)); background: var(--red-soft); color: var(--red); }
+.pill.cool { border-color: color-mix(in srgb, var(--teal) 65%, var(--line)); background: var(--teal-soft); color: var(--teal); }
+.pill.warn { border-color: color-mix(in srgb, var(--amber) 65%, var(--line)); background: var(--amber-soft); color: var(--amber); }
+.sample-list { display: flex; flex-wrap: wrap; gap: .5rem; }
+.sample-chip {
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: var(--panel-2);
+  color: var(--ink);
+  padding: .35rem .65rem;
+  font: .78rem var(--font-mono);
+  max-width: 100%;
+}
+.sample-chip:hover { border-color: var(--accent, var(--teal)); }
+.stat-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: .6rem; }
+.stat {
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  background: var(--panel-2);
+  padding: .75rem;
+}
+.stat b { display: block; font: 850 1.45rem var(--font-ui); letter-spacing: -.03em; }
+.stat span { color: var(--muted); font-size: .82rem; }
+.timeline-grid { display: grid; grid-template-columns: 1fr 320px; gap: 1rem; align-items: stretch; }
+.timeline-svg { width: 100%; min-width: 980px; height: 520px; display: block; }
+.chart-scroll { overflow-x: auto; }
+.panel-head {
+  padding: 1rem 1.1rem;
+  border-bottom: 1px solid var(--line);
+  background: color-mix(in srgb, var(--panel-2) 75%, transparent);
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  align-items: flex-start;
+}
+.panel-head p { margin-top: .2rem; font-size: .9rem; }
+.panel-body { padding: 1rem; }
+.timeline-list { display: grid; gap: .55rem; }
+.timeline-item {
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  background: var(--panel-2);
+  padding: .75rem;
+  text-align: left;
+  color: var(--ink);
+}
+.timeline-item[aria-pressed="true"] { border-color: var(--red); background: var(--red-soft); }
+.timeline-item b { display: block; }
+.timeline-item span { color: var(--muted); font-size: .86rem; }
+.surface-grid { display: grid; grid-template-columns: 1.1fr .9fr; gap: 1rem; }
+.bars { display: grid; gap: .7rem; }
+.bar-row { display: grid; grid-template-columns: 145px 1fr 72px; align-items: center; gap: .7rem; }
+.bar-name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--ink); font: .82rem var(--font-mono); }
+.bar-track { height: 12px; border: 1px solid var(--line); border-radius: 999px; background: var(--panel-3); overflow: hidden; }
+.bar-fill { display: block; height: 100%; width: var(--w); border-radius: inherit; background: linear-gradient(90deg, var(--teal), var(--blue)); }
+.bar-fill.hit { background: linear-gradient(90deg, var(--red), var(--amber)); }
+.bar-count { text-align: right; color: var(--muted); font: 850 .78rem var(--font-mono); }
+.coverage-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: .65rem; }
+.coverage {
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  background: var(--panel-2);
+  padding: .75rem;
+}
+.coverage strong { display: block; margin-bottom: .55rem; }
+.coverage-flags { display: grid; grid-template-columns: 1fr 1fr; gap: .45rem; }
+.flag { border-radius: 12px; background: var(--panel-3); color: var(--muted); padding: .45rem; text-align: center; font: .72rem var(--font-mono); }
+.flag.on { background: var(--teal-soft); color: var(--teal); border: 1px solid color-mix(in srgb, var(--teal) 50%, var(--line)); }
+.flag.hit { background: var(--red-soft); color: var(--red); border: 1px solid color-mix(in srgb, var(--red) 50%, var(--line)); }
+.text-link {
+  color: var(--blue);
+  font-weight: 780;
+  text-decoration-thickness: 1px;
+}
+.heatmap-shell { display: grid; grid-template-columns: minmax(0, 1fr) 360px; gap: 1rem; align-items: start; }
+.heatmap-svg { width: 100%; min-width: 960px; display: block; }
+.heatmap-svg text { pointer-events: none; }
+.heat-cell { cursor: pointer; transition: opacity .14s ease, stroke-width .14s ease; }
+.heat-cell:hover { opacity: 1; stroke: var(--ink); stroke-width: 2.5; }
+.heat-label { fill: var(--muted); font-family: var(--font-mono); font-size: 12px; }
+.heat-title { fill: var(--ink); font-family: var(--font-ui); font-size: 13px; font-weight: 820; }
+.heat-legend { display: flex; flex-wrap: wrap; gap: .6rem; color: var(--muted); font: .78rem var(--font-mono); }
+.heat-legend span { display: inline-flex; align-items: center; gap: .35rem; }
+.heat-legend i { width: .85rem; height: .85rem; border-radius: 4px; border: 1px solid var(--line-strong); display: inline-block; }
+.legend-hit { background: var(--red); }
+.legend-lock { background: var(--amber); }
+.legend-empty { background: var(--panel-3); }
+.proof-list { display: grid; gap: .65rem; max-height: 620px; overflow: auto; padding-right: .25rem; }
+.proof-card {
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  background: var(--panel-2);
+  padding: .8rem;
+}
+.proof-card b { display: block; font: 850 .86rem var(--font-mono); }
+.proof-card span { display: block; color: var(--muted); font-size: .84rem; margin-top: .15rem; }
+.proof-links, .evidence-links { display: flex; flex-wrap: wrap; gap: .45rem; margin-top: .55rem; }
+.proof-links a, .evidence-links a {
+  min-height: 30px;
+  display: inline-flex;
+  align-items: center;
+  border: 1px solid var(--line-strong);
+  border-radius: 999px;
+  padding: .2rem .55rem;
+  color: var(--blue);
+  text-decoration: none;
+  font: .72rem var(--font-mono);
+}
+.proof-links a:hover, .evidence-links a:hover { border-color: var(--blue); background: var(--blue-soft); }
+.path { display: grid; grid-template-columns: repeat(5, minmax(160px, 1fr)); gap: .8rem; min-width: 900px; }
+.path-step {
+  position: relative;
+  border: 1px solid var(--line);
+  border-radius: 18px;
+  background: var(--panel);
+  padding: 1rem;
+  min-height: 160px;
+}
+.path-step::before {
+  content: attr(data-step);
+  display: grid;
+  place-items: center;
+  width: 2rem;
+  height: 2rem;
+  border-radius: 50%;
+  background: var(--blue-soft);
+  color: var(--blue);
+  font: 900 .82rem var(--font-mono);
+  margin-bottom: .8rem;
+}
+.path-step:not(:last-child)::after {
+  content: "";
+  position: absolute;
+  top: 3rem;
+  right: -.8rem;
+  width: .8rem;
+  height: 2px;
+  background: var(--line-strong);
+}
+.path-step b { display: block; margin-bottom: .4rem; }
+.path-step span { color: var(--muted); font-size: .92rem; }
+.evidence-shell { display: grid; grid-template-columns: 320px 1fr; gap: 1rem; align-items: start; }
+.evidence-groups { display: grid; gap: .65rem; }
+.evidence-group {
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  background: var(--panel);
+  padding: .75rem;
+  text-align: left;
+  color: var(--ink);
+}
+.evidence-group[aria-pressed="true"] { border-color: var(--red); background: var(--red-soft); }
+.evidence-group b { display: block; }
+.evidence-group span { color: var(--muted); font-size: .86rem; }
+.evidence-list { display: grid; gap: .55rem; }
+.evidence-row {
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  background: var(--panel-2);
+  padding: .75rem;
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: .75rem;
+  align-items: center;
+}
+.evidence-row button { justify-self: end; }
+.evidence-main b { display: block; font: 850 .88rem var(--font-mono); }
+.evidence-main span { color: var(--muted); font-size: .86rem; }
+.action-grid, .source-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: .85rem; }
+.action, .source {
+  border: 1px solid var(--line);
+  border-radius: 18px;
+  background: var(--panel);
+  padding: 1rem;
+}
+.action p, .source p { margin-top: .5rem; font-size: .93rem; }
+.source a { color: var(--blue); font-weight: 760; }
+#tooltip {
+  position: fixed;
+  z-index: 180;
+  max-width: 340px;
+  border: 1px solid var(--line-strong);
+  border-radius: 16px;
+  background: var(--paper);
+  box-shadow: var(--shadow);
+  padding: .85rem .95rem;
+  color: var(--ink);
+  opacity: 0;
+  pointer-events: none;
+  transform: translateY(6px);
+  transition: opacity .14s ease, transform .14s ease;
+}
+#tooltip.show { opacity: 1; transform: translateY(0); }
+#tooltip strong { display: block; margin-bottom: .25rem; }
+dialog {
+  width: min(820px, calc(100% - 2rem));
+  border: 1px solid var(--line-strong);
+  border-radius: 24px;
+  padding: 0;
+  background: var(--paper);
+  color: var(--ink);
+  box-shadow: var(--shadow);
+}
+dialog::backdrop { background: rgba(0, 0, 0, .62); }
+.dialog-head { display: flex; align-items: center; justify-content: space-between; gap: 1rem; padding: 1rem 1.1rem; border-bottom: 1px solid var(--line); background: var(--panel-2); }
+.dialog-body { padding: 1rem 1.1rem; max-height: min(72vh, 650px); overflow: auto; }
+.dialog-body dl { display: grid; grid-template-columns: 150px 1fr; gap: .7rem 1rem; }
+.dialog-body dt { color: var(--soft); font: .75rem var(--font-mono); text-transform: uppercase; }
+.dialog-body dd { margin: 0; }
+.footer { padding: 3rem 0 4rem; border-top: 1px solid var(--line); color: var(--soft); font-size: .9rem; }
+.reveal { animation: rise .55s ease both; }
+@keyframes rise { from { opacity: .01; transform: translateY(14px); } to { opacity: 1; transform: translateY(0); } }
+@keyframes pulse { 0%, 100% { opacity: .58; } 50% { opacity: 1; } }
+@media (max-width: 1050px) {
+  .hero-grid, .section-head, .atlas-shell, .timeline-grid, .surface-grid, .heatmap-shell, .evidence-shell { grid-template-columns: 1fr; }
+  .metric-strip, .action-grid, .source-grid { grid-template-columns: repeat(2, 1fr); }
+}
+@media (max-width: 660px) {
+  .shell, .wide { width: min(100% - 1.2rem, 1220px); }
+  .topbar-inner { flex-direction: column; align-items: flex-start; padding: .75rem 0; }
+  .nav a:nth-of-type(n+3) { display: none; }
+  h1 { font-size: clamp(3.4rem, 18vw, 5rem); }
+  .metric-strip, .receipt-grid, .stat-grid, .coverage-grid, .action-grid, .source-grid { grid-template-columns: 1fr; }
+  .bar-row { grid-template-columns: 1fr 72px; }
+  .bar-row .bar-track { grid-column: 1 / -1; grid-row: 2; }
+  .evidence-row { grid-template-columns: 1fr; }
+  .evidence-row button { justify-self: start; }
+  .dialog-body dl { grid-template-columns: 1fr; }
+}
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation: none !important; transition-duration: .001ms !important; scroll-behavior: auto !important; }
+}
+</style>
+</head>
+<body>
+<div id="progress" role="progressbar" aria-label="Reading progress"></div>
+<div id="tooltip" role="tooltip" aria-hidden="true"></div>
+<div id="announcer" aria-live="polite"></div>
+
+<header class="topbar">
+  <div class="shell topbar-inner">
+    <a href="#top" class="brand" aria-label="Supply Chain Attack Atlas home">
+      <span class="brand-mark">SCA</span>
+      <span><strong>Supply Chain Attack Atlas</strong><span>confirmed indicators and staged exposure</span></span>
+    </a>
+    <nav class="nav" aria-label="Page sections">
+      <a href="#atlas">Atlas</a>
+      <a href="#timeline">Timeline</a>
+      <a href="#surface">Surface</a>
+      <a href="#heatmap">Heatmap</a>
+      <a href="#evidence">Evidence</a>
+      <button id="theme-toggle" type="button">Dark</button>
+    </nav>
+  </div>
+</header>
+
+<main id="top">
+  <section class="hero shell">
+    <div class="hero-grid">
+      <div class="reveal">
+        <div class="kicker">interactive attack atlas</div>
+        <h1>Install is a trust boundary.</h1>
+        <p class="lede">This redesign turns the data story into an explorable map. Campaigns are not tiny rows in a table anymore. They are visible objects with gravity: tracked artifacts, confirmed indicators, staged-scan observations, and response implications.</p>
+        <div class="hero-actions">
+          <a class="button primary" href="#atlas">Explore the atlas</a>
+          <a class="button ghost" href="#evidence">Open evidence</a>
+        </div>
+      </div>
+      <aside class="hero-panel reveal" aria-label="Opening visualization">
+        <svg id="hero-orbit" class="mini-orbit" role="img" aria-label="Animated campaign orbit preview"></svg>
+        <div class="receipt-grid" id="receipt-grid"></div>
+      </aside>
+    </div>
+  </section>
+
+  <section class="section compact shell" id="overview">
+    <div class="chapter"><span>00</span><b>How to read this</b></div>
+    <div class="section-head reveal">
+      <div><h2>Two kinds of evidence. One map.</h2></div>
+      <p>A confirmed indicator is an exact package-version in the scanner’s advisory snapshot. An observed staged hit is a confirmed indicator that appeared while resolving selected popular package versions. This page keeps those meanings visually separate.</p>
+    </div>
+    <div class="metric-strip" id="metric-strip"></div>
+    <p class="note reveal">The popular package matrix felt sparse because most sampled popular versions did not resolve poisoned artifacts. The atlas below fills in the confirmed campaigns without pretending those indicators were all found in React, Vue, TypeScript, or other sampled packages.</p>
+  </section>
+
+  <section class="section wide" id="atlas">
+    <div class="shell">
+      <div class="chapter"><span>01</span><b>Campaign constellation</b></div>
+      <div class="section-head reveal">
+        <div><h2>Every campaign becomes a body in the system.</h2></div>
+        <p>Size encodes tracked artifact count. Distance from the center separates smaller attacks from broad waves. Sample dots around each campaign are exact package-version indicators. Hover for quick context; click for full evidence.</p>
+      </div>
+    </div>
+    <div class="atlas-shell">
+      <section class="viz-card reveal">
+        <div class="viz-toolbar">
+          <div class="toolbar-copy"><h3>Confirmed attack indicators</h3><p>Filter the constellation without losing the claim boundary.</p></div>
+          <div class="controls">
+            <input id="atlas-search" type="search" placeholder="Search campaigns or packages" autocomplete="off" inputmode="search" aria-label="Search campaigns or packages">
+            <button class="chip" type="button" data-filter="all" aria-pressed="true">All</button>
+            <button class="chip" type="button" data-filter="observed">Observed</button>
+            <button class="chip" type="button" data-filter="confirmed-only">Confirmed only</button>
+            <button class="button ghost" type="button" id="atlas-reset">Reset</button>
+          </div>
+        </div>
+        <div class="constellation-wrap">
+          <svg id="constellation" class="constellation" role="img" aria-label="Campaign constellation visualization"></svg>
+        </div>
+      </section>
+      <aside class="side-card reveal" aria-label="Selected campaign details">
+        <div class="side-head"><h3>Selected campaign</h3><p>Click any campaign or package dot.</p></div>
+        <div class="side-body" id="selected-panel"></div>
+      </aside>
+    </div>
+  </section>
+
+  <section class="section wide" id="timeline">
+    <div class="shell">
+      <div class="chapter"><span>02</span><b>Attack windows</b></div>
+      <div class="section-head reveal">
+        <div><h2>Small publish windows create visible gravity.</h2></div>
+        <p>The May wave dominates the scanner snapshot, while older developer-tool compromises still matter because they target high-authority install environments.</p>
+      </div>
+    </div>
+    <div class="timeline-grid">
+      <section class="panel reveal">
+        <div class="panel-head"><div><h3>Timeline ribbon</h3><p>Cards are staggered so tight incident windows stay readable.</p></div></div>
+        <div class="panel-body chart-scroll"><svg id="timeline-chart" class="timeline-svg" role="img" aria-label="Timeline ribbon with artifact volume"></svg></div>
+      </section>
+      <aside class="panel reveal">
+        <div class="panel-head"><div><h3>Chronology</h3><p>Use as a compact navigation list.</p></div></div>
+        <div class="panel-body"><div class="timeline-list" id="timeline-list"></div></div>
+      </aside>
+    </div>
+  </section>
+
+  <section class="section shell" id="surface">
+    <div class="chapter"><span>03</span><b>Popular package surface</b></div>
+    <div class="section-head reveal">
+      <div><h2>Popular scans answer the narrower question.</h2></div>
+      <p>They show what appeared while staging selected package versions. That is not the same thing as the campaign atlas. Here, surface size and observed campaign coverage sit side by side.</p>
+    </div>
+    <div class="surface-grid">
+      <section class="panel reveal">
+        <div class="panel-head"><div><h3>Largest staged surfaces</h3><p>Maximum resolved package count observed per sampled package.</p></div></div>
+        <div class="panel-body"><div class="bars" id="surface-bars"></div></div>
+      </section>
+      <section class="panel reveal">
+        <div class="panel-head"><div><h3>Confirmed vs observed</h3><p>All campaigns are confirmed; only some appeared in the staged scan.</p></div></div>
+        <div class="panel-body"><div class="coverage-grid" id="coverage-grid"></div></div>
+      </section>
+    </div>
+  </section>
+
+  <section class="section wide" id="heatmap">
+    <div class="shell">
+      <div class="chapter"><span>04</span><b>Proof heatmap</b></div>
+      <div class="section-head reveal">
+        <div><h2>The exact hits become visible proof.</h2></div>
+        <p>Each colored cell is an observed package-version indicator in a staged package row. Click a cell to open the exact npm/PyPI version link, the staged subject, and the advisory source behind the claim.</p>
+      </div>
+    </div>
+    <div class="heatmap-shell">
+      <section class="panel reveal">
+        <div class="panel-head">
+          <div><h3>Staged exposure heatmap</h3><p>Rows are staged package/version subjects; columns are confirmed campaigns.</p></div>
+          <div class="heat-legend" aria-label="Heatmap legend">
+            <span><i class="legend-hit"></i> observed</span>
+            <span><i class="legend-lock"></i> lockfile-only</span>
+            <span><i class="legend-empty"></i> no hit</span>
+          </div>
+        </div>
+        <div class="panel-body chart-scroll"><svg id="proof-heatmap" class="heatmap-svg" role="img" aria-label="Observed package-version heatmap by campaign"></svg></div>
+      </section>
+      <aside class="panel reveal">
+        <div class="panel-head"><div><h3>Exact proof links</h3><p>Version and advisory URLs generated from embedded rows.</p></div></div>
+        <div class="panel-body"><div class="proof-list" id="proof-list"></div></div>
+      </aside>
+    </div>
+  </section>
+
+  <section class="section shell" id="mechanism">
+    <div class="chapter"><span>05</span><b>Mechanism</b></div>
+    <div class="section-head reveal">
+      <div><h2>The dangerous moment can happen before app code.</h2></div>
+      <p>The artifact crosses authority boundaries: publish access, registry artifact, install location, machine authority, then response. The evidence gets stronger the closer it gets to execution locations like global bins or npx caches.</p>
+    </div>
+    <section class="panel reveal">
+      <div class="panel-head"><div><h3>Trust path</h3><p>Scroll horizontally on small screens.</p></div></div>
+      <div class="panel-body chart-scroll"><div class="path" id="path-map"></div></div>
+    </section>
+  </section>
+
+  <section class="section wide" id="evidence">
+    <div class="shell">
+      <div class="chapter"><span>06</span><b>Evidence explorer</b></div>
+      <div class="section-head reveal">
+        <div><h2>Evidence should be a drill-down, not the whole story.</h2></div>
+        <p>Select a campaign on the left, then inspect exact package-version rows on the right. Use the tabs to separate confirmed indicators from observed staged hits.</p>
+      </div>
+    </div>
+    <div class="evidence-shell">
+      <aside class="drawer-card reveal">
+        <div class="panel-head"><div><h3>Campaigns</h3><p>Filter evidence by campaign.</p></div></div>
+        <div class="panel-body"><div class="evidence-groups" id="evidence-groups"></div></div>
+      </aside>
+      <section class="drawer-card reveal">
+        <div class="panel-head">
+          <div><h3 id="evidence-title">All evidence</h3><p id="evidence-subtitle">Confirmed indicators and observed staged hits.</p></div>
+          <button id="download-csv" class="button" type="button">Download CSV</button>
+        </div>
+        <div class="panel-body">
+          <div class="controls" style="margin-bottom:1rem">
+            <button class="tab-button" type="button" data-kind="all" aria-pressed="true">All</button>
+            <button class="tab-button" type="button" data-kind="confirmed">Confirmed indicators</button>
+            <button class="tab-button" type="button" data-kind="observed">Observed staged hits</button>
+            <input id="evidence-search" type="search" placeholder="Search evidence" autocomplete="off" inputmode="search" aria-label="Search evidence">
+          </div>
+          <div class="evidence-list" id="evidence-list"></div>
+        </div>
+      </section>
+    </div>
+  </section>
+
+  <section class="section shell" id="response">
+    <div class="chapter"><span>07</span><b>Response map</b></div>
+    <div class="section-head reveal">
+      <div><h2>Move controls to the authority boundary.</h2></div>
+      <p>Supply-chain defense is not a single scanner. It is publish identity, artifact verification, install isolation, inventory, response, and precise communication.</p>
+    </div>
+    <div class="action-grid" id="action-grid"></div>
+  </section>
+
+  <section class="section shell" id="sources">
+    <div class="chapter"><span>08</span><b>Sources and caveats</b></div>
+    <div class="section-head reveal">
+      <div><h2>Confirmed does not mean executed.</h2></div>
+      <p>Confirmed indicator means exact package-version membership in the scanner snapshot. Observed staged hit means the package appeared in this experiment. Execution needs stronger local machine-state evidence.</p>
+    </div>
+    <div class="source-grid" id="source-grid"></div>
+  </section>
+</main>
+
+<footer class="footer shell">Self-contained v2 redesign. No external runtime assets. Font stack uses modern system display faces: Aptos Display, Segoe UI Variable Display, SF Pro Display, and Helvetica Neue.</footer>
+
+<dialog id="detail-dialog" aria-labelledby="dialog-title">
+  <div class="dialog-head"><h3 id="dialog-title">Detail</h3><button id="dialog-close" class="button" type="button">Close</button></div>
+  <div class="dialog-body" id="dialog-body"></div>
+</dialog>
+
+<script type="application/json" id="data-json">
+{
+  "scanner": {
+    "name": "supply-chain-attack",
+    "version": "0.1.10",
+    "snapshotDate": "2026-05-12",
+    "trackedArtifacts": 438
+  },
+  "stagedScan": {
+    "rows": 91,
+    "resolvedPairs": 5054,
+    "observedHits": 12,
+    "observedCampaigns": [
+      "SOCKET-mini-shai-hulud-expansion-2026-05",
+      "GHSA-fw8c-xr5c-95f9",
+      "SOCKET-nx-2025-08",
+      "SOCKET-rspack-2024-12",
+      "GHSA-g7cv-rxg3-hmpx"
+    ],
+    "popularPackages": [
+      { "pkg": "next", "repo": "vercel/next.js", "maxCount": 816, "hits": 1 },
+      { "pkg": "storybook", "repo": "storybookjs/storybook", "maxCount": 618, "hits": 1 },
+      { "pkg": "webpack", "repo": "webpack/webpack", "maxCount": 357, "hits": 0 },
+      { "pkg": "tailwindcss", "repo": "tailwindlabs/tailwindcss", "maxCount": 229, "hits": 0 },
+      { "pkg": "eslint", "repo": "eslint/eslint", "maxCount": 134, "hits": 0 },
+      { "pkg": "express", "repo": "expressjs/express", "maxCount": 69, "hits": 0 },
+      { "pkg": "vite", "repo": "vitejs/vite", "maxCount": 63, "hits": 0 },
+      { "pkg": "@nestjs/core", "repo": "nestjs/nest", "maxCount": 60, "hits": 0 },
+      { "pkg": "@babel/core", "repo": "babel/babel", "maxCount": 39, "hits": 0 },
+      { "pkg": "axios", "repo": "axios/axios", "maxCount": 27, "hits": 0 },
+      { "pkg": "vue", "repo": "vuejs/core", "maxCount": 23, "hits": 0 },
+      { "pkg": "svelte", "repo": "sveltejs/svelte", "maxCount": 20, "hits": 0 }
+    ],
+    "observedRows": [
+      { "pkg": "handlebars", "version": "4.7.9", "row": "next@4.2.2", "campaign": "SOCKET-mini-shai-hulud-expansion-2026-05", "confidence": "lockfile = possible resolution" },
+      { "pkg": "handlebars", "version": "4.7.9", "row": "storybook@7.6.6", "campaign": "SOCKET-mini-shai-hulud-expansion-2026-05", "confidence": "lockfile = possible resolution" },
+      { "pkg": "axios", "version": "1.14.1", "row": "axios@1.14.1", "campaign": "GHSA-fw8c-xr5c-95f9", "confidence": "advisory anchor" },
+      { "pkg": "axios", "version": "0.30.4", "row": "axios@0.30.4", "campaign": "GHSA-fw8c-xr5c-95f9", "confidence": "advisory anchor" },
+      { "pkg": "nx", "version": "21.5.0", "row": "nx@21.5.0", "campaign": "SOCKET-nx-2025-08", "confidence": "advisory anchor" },
+      { "pkg": "@nx/devkit", "version": "21.5.0", "row": "@nx/devkit@21.5.0", "campaign": "SOCKET-nx-2025-08", "confidence": "advisory anchor" },
+      { "pkg": "@rspack/core", "version": "1.1.7", "row": "@rspack/core@1.1.7", "campaign": "SOCKET-rspack-2024-12", "confidence": "advisory anchor" },
+      { "pkg": "@rspack/cli", "version": "1.1.7", "row": "@rspack/cli@1.1.7", "campaign": "SOCKET-rspack-2024-12", "confidence": "advisory anchor" },
+      { "pkg": "@tanstack/react-router", "version": "1.166.6", "row": "@tanstack/react-router@1.166.6", "campaign": "GHSA-g7cv-rxg3-hmpx", "confidence": "advisory anchor" },
+      { "pkg": "@tanstack/router-core", "version": "1.166.4", "row": "@tanstack/router-core@1.166.4", "campaign": "GHSA-g7cv-rxg3-hmpx", "confidence": "advisory anchor" },
+      { "pkg": "@tanstack/query-core", "version": "5.90.12", "row": "@tanstack/react-query@5.90.12", "campaign": "GHSA-g7cv-rxg3-hmpx", "confidence": "advisory anchor" },
+      { "pkg": "@tanstack/react-query", "version": "5.90.12", "row": "@tanstack/react-query@5.90.12", "campaign": "GHSA-g7cv-rxg3-hmpx", "confidence": "advisory anchor" }
+    ]
+  },
+  "campaigns": [
+    {
+      "id": "SOCKET-nx-2025-08",
+      "short": "Nx",
+      "title": "Nx s1ngularity supply-chain compromise",
+      "published": "2025-08-27",
+      "artifactCount": 32,
+      "type": "devtool compromise",
+      "color": "#79a7ff",
+      "source": "https://socket.dev/blog/nx-packages-compromised",
+      "summary": "Malicious Nx versions attempted credential theft from developer environments.",
+      "samples": [
+        { "name": "nx", "version": "20.9.0", "ecosystem": "npm", "binaries": "nx" },
+        { "name": "nx", "version": "21.5.0", "ecosystem": "npm", "binaries": "nx" },
+        { "name": "@nx/devkit", "version": "21.5.0", "ecosystem": "npm", "binaries": "" },
+        { "name": "@nx/js", "version": "21.8.0", "ecosystem": "npm", "binaries": "" },
+        { "name": "@nx/workspace", "version": "20.12.0", "ecosystem": "npm", "binaries": "" },
+        { "name": "@nx/devkit", "version": "20.10.0", "ecosystem": "npm", "binaries": "" }
+      ]
+    },
+    {
+      "id": "SOCKET-rspack-2024-12",
+      "short": "Rspack",
+      "title": "Rspack npm packages compromised",
+      "published": "2024-12-19",
+      "artifactCount": 2,
+      "type": "build-tool compromise",
+      "color": "#86d86c",
+      "source": "https://socket.dev/blog/rspack-supply-chain-attack",
+      "summary": "Malicious Rspack releases contained postinstall malware targeting developer machines and CI environments.",
+      "samples": [
+        { "name": "@rspack/core", "version": "1.1.7", "ecosystem": "npm", "binaries": "" },
+        { "name": "@rspack/cli", "version": "1.1.7", "ecosystem": "npm", "binaries": "rspack" }
+      ]
+    },
+    {
+      "id": "GHSA-fw8c-xr5c-95f9",
+      "short": "Axios",
+      "title": "Axios maintainer account compromise pulled malicious plain-crypto-js dependency",
+      "published": "2026-03-31",
+      "artifactCount": 9,
+      "type": "maintainer account compromise",
+      "color": "#ff6d57",
+      "source": "https://socket.dev/blog/axios-npm-package-compromised",
+      "summary": "Two malicious axios versions injected a trojanized plain-crypto-js dependency that ran during postinstall.",
+      "samples": [
+        { "name": "axios", "version": "0.30.4", "ecosystem": "npm", "binaries": "" },
+        { "name": "axios", "version": "1.14.1", "ecosystem": "npm", "binaries": "" },
+        { "name": "plain-crypto-js", "version": "4.2.0", "ecosystem": "npm", "binaries": "" },
+        { "name": "plain-crypto-js", "version": "4.2.1", "ecosystem": "npm", "binaries": "" },
+        { "name": "@shadanai/openclaw", "version": "2026.3.31-1", "ecosystem": "npm", "binaries": "" },
+        { "name": "@qqbrowser/openclaw-qbot", "version": "0.0.130", "ecosystem": "npm", "binaries": "" }
+      ]
+    },
+    {
+      "id": "SOCKET-namastex-canisterworm-2026-04",
+      "short": "CanisterWorm",
+      "title": "Namastex.ai packages compromised by CanisterWorm",
+      "published": "2026-04-21",
+      "artifactCount": 15,
+      "type": "AI/devtool compromise",
+      "color": "#c88cff",
+      "source": "https://socket.dev/blog/namastex-npm-packages-compromised-canisterworm",
+      "summary": "AI and developer tooling packages were compromised with credential theft and worm behavior.",
+      "samples": [
+        { "name": "@automagik/genie", "version": "4.260421.33", "ecosystem": "npm", "binaries": "genie, automagik" },
+        { "name": "pgserve", "version": "1.1.11", "ecosystem": "npm", "binaries": "pgserve" },
+        { "name": "3d-heatmap", "version": "1.0.10", "ecosystem": "npm", "binaries": "" },
+        { "name": "storage-indexeddb", "version": "5.6.2", "ecosystem": "npm", "binaries": "" },
+        { "name": "gitlens-sdk", "version": "1.2.6", "ecosystem": "npm", "binaries": "" },
+        { "name": "block-edit", "version": "1.0.1", "ecosystem": "npm", "binaries": "" }
+      ]
+    },
+    {
+      "id": "SOCKET-mini-shai-hulud-2026-04",
+      "short": "Mini Shai-Hulud Apr",
+      "title": "Mini Shai-Hulud campaign affecting SAP CAP, Intercom, Lightning, Mistral and related packages",
+      "published": "2026-04-29",
+      "artifactCount": 11,
+      "type": "mixed ecosystem campaign",
+      "color": "#f4b84a",
+      "source": "https://socket.dev/supply-chain-attacks/mini-shai-hulud",
+      "summary": "Socket tracked packages that exfiltrate secrets and attempt persistence through developer tooling files.",
+      "samples": [
+        { "name": "@cap-js/cds-types", "version": "0.15.0", "ecosystem": "npm", "binaries": "" },
+        { "name": "@cap-js/cds-typer", "version": "0.35.0", "ecosystem": "npm", "binaries": "cds-typer" },
+        { "name": "mbt", "version": "1.2.34", "ecosystem": "npm", "binaries": "mbt" },
+        { "name": "intercom-client", "version": "7.0.4", "ecosystem": "npm", "binaries": "" },
+        { "name": "lightning", "version": "2.6.2", "ecosystem": "pypi", "binaries": "lightning" },
+        { "name": "mistralai", "version": "2.4.6", "ecosystem": "pypi", "binaries": "" }
+      ]
+    },
+    {
+      "id": "SOCKET-canistersprawl-2026-05",
+      "short": "CanisterSprawl",
+      "title": "CanisterSprawl Brand-Squat Packages",
+      "published": "2026-05-08",
+      "artifactCount": 22,
+      "type": "brand-squat campaign",
+      "color": "#2ee6bf",
+      "source": "https://socket.dev/supply-chain-attacks/canistersprawl",
+      "summary": "Socket tracked brand-squatted npm packages imitating OpenAI, Anthropic, Meta, Vercel, and developer tooling brands.",
+      "samples": [
+        { "name": "@azure-ai/openai", "version": "1.0.0", "ecosystem": "npm", "binaries": "" },
+        { "name": "@openai/agents", "version": "1.0.0", "ecosystem": "npm", "binaries": "" },
+        { "name": "@anthropic-ai/claude-code", "version": "1.0.0", "ecosystem": "npm", "binaries": "claude-code" },
+        { "name": "@meta/llama", "version": "1.0.0", "ecosystem": "npm", "binaries": "" },
+        { "name": "@vercel/ai-sdk", "version": "1.0.0", "ecosystem": "npm", "binaries": "" },
+        { "name": "@langchain/core", "version": "1.0.0", "ecosystem": "npm", "binaries": "" }
+      ]
+    },
+    {
+      "id": "GHSA-g7cv-rxg3-hmpx",
+      "short": "TanStack",
+      "title": "TanStack npm packages compromised in Mini Shai-Hulud",
+      "published": "2026-05-11",
+      "artifactCount": 84,
+      "type": "package-family compromise",
+      "color": "#79a7ff",
+      "source": "https://github.com/TanStack/router/security/advisories/GHSA-g7cv-rxg3-hmpx",
+      "summary": "A compromised npm token published malicious versions of 42 TanStack packages containing credential exfiltration behavior.",
+      "samples": [
+        { "name": "@tanstack/react-router", "version": "1.166.6", "ecosystem": "npm", "binaries": "" },
+        { "name": "@tanstack/router-core", "version": "1.166.4", "ecosystem": "npm", "binaries": "" },
+        { "name": "@tanstack/query-core", "version": "5.90.12", "ecosystem": "npm", "binaries": "" },
+        { "name": "@tanstack/react-query", "version": "5.90.14", "ecosystem": "npm", "binaries": "" },
+        { "name": "@tanstack/store", "version": "0.8.0", "ecosystem": "npm", "binaries": "" },
+        { "name": "@tanstack/react-start", "version": "1.167.1", "ecosystem": "npm", "binaries": "" }
+      ]
+    },
+    {
+      "id": "SOCKET-mini-shai-hulud-expansion-2026-05",
+      "short": "Mini Shai-Hulud May",
+      "title": "Mini Shai-Hulud expansion into AI/devtool ecosystem packages",
+      "published": "2026-05-12",
+      "artifactCount": 263,
+      "type": "broad expansion",
+      "color": "#ff6d57",
+      "source": "https://socket.dev/supply-chain-attacks/mini-shai-hulud",
+      "summary": "Socket and Snyk reporting showed the Mini Shai-Hulud wave expanding into Mistral, UiPath, Squawk, OpenSearch and related packages.",
+      "samples": [
+        { "name": "handlebars", "version": "4.7.9", "ecosystem": "npm", "binaries": "" },
+        { "name": "@dqbd/tiktoken", "version": "1.0.23", "ecosystem": "npm", "binaries": "" },
+        { "name": "react-devtools-core", "version": "7.0.0", "ecosystem": "npm", "binaries": "" },
+        { "name": "@vscode/test-electron", "version": "2.6.0", "ecosystem": "npm", "binaries": "" },
+        { "name": "@mistralai/mistralai", "version": "2.2.2", "ecosystem": "npm", "binaries": "" },
+        { "name": "@uipath/uipathcli", "version": "2.25.4", "ecosystem": "npm", "binaries": "uipath" }
+      ]
+    }
+  ],
+  "actions": [
+    { "stage": "Publish identity", "title": "Use Trusted Publishing", "body": "Reduce long-lived npm token exposure by using short-lived workflow identity where package ownership and registry support allow it.", "source": "https://docs.npmjs.com/trusted-publishers/" },
+    { "stage": "Artifact verification", "title": "Check provenance", "body": "Provenance and signatures do not make code safe, but they give consumers a concrete way to compare registry artifacts with expected build workflows.", "source": "https://docs.npmjs.com/viewing-package-provenance/" },
+    { "stage": "Install boundary", "title": "Limit lifecycle authority", "body": "Use ignore-scripts for research and untrusted inspection. Keep install jobs away from broad credentials.", "source": "https://docs.npmjs.com/cli/v11/using-npm/scripts/" },
+    { "stage": "Inventory", "title": "Keep SBOMs and lockfiles searchable", "body": "Incident response starts with exact package-version indicators. Teams need fast search across lockfiles, caches, CI logs, and images.", "source": "https://docs.npmjs.com/cli/v11/commands/npm-sbom/" },
+    { "stage": "Response", "title": "Escalate by location strength", "body": "Lockfile is possible exposure. Cache, global, npx, bin, or node_modules evidence is stronger and should trigger cleanup and credential rotation.", "source": "https://github.com/zonko-ai/supply-chain-attack" },
+    { "stage": "Communication", "title": "Say exactly what happened", "body": "Do not turn a poisoned registry artifact into an unsupported claim that a GitHub repository was compromised.", "source": "https://github.com/zonko-ai/supply-chain-attack" }
+  ],
+  "sources": [
+    { "id": "scanner", "name": "supply-chain-attack GitHub", "url": "https://github.com/zonko-ai/supply-chain-attack", "detail": "Scanner behavior, local-state model, advisory snapshot, interpretation guidance, and privacy notes." },
+    { "id": "scanner-npm", "name": "supply-chain-attack npm", "url": "https://www.npmjs.com/package/supply-chain-attack", "detail": "Package metadata and tarball inspected for advisory package-version indicators." },
+    { "id": "npm-scripts", "name": "npm lifecycle scripts", "url": "https://docs.npmjs.com/cli/v11/using-npm/scripts/", "detail": "Install and ci lifecycle script semantics, including postinstall." },
+    { "id": "trusted", "name": "npm Trusted Publishing", "url": "https://docs.npmjs.com/trusted-publishers/", "detail": "OIDC-based publishing to reduce reliance on long-lived npm tokens." },
+    { "id": "provenance", "name": "npm provenance", "url": "https://docs.npmjs.com/viewing-package-provenance/", "detail": "Viewing provenance and audit signatures for package artifacts." },
+    { "id": "sbom", "name": "npm SBOM", "url": "https://docs.npmjs.com/cli/v11/commands/npm-sbom/", "detail": "Generating SPDX or CycloneDX dependency inventories." },
+    { "id": "tds-ref", "name": "TDS Student Intelligence Brief", "url": "https://mynkpdr.github.io/tds-analysis/", "detail": "Used as layout inspiration for chaptered narrative pacing and at-a-glance story structure, not as security evidence." }
+  ]
+}
+</script>
+
+<script>
+// @ts-check
+(() => {
+  const DATA = JSON.parse(document.getElementById('data-json').textContent);
+  const $ = (selector, root = document) => root.querySelector(selector);
+  const $$ = (selector, root = document) => Array.from(root.querySelectorAll(selector));
+  const fmt = new Intl.NumberFormat('en-US');
+  const dateFmt = new Intl.DateTimeFormat('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+  const observed = new Set(DATA.stagedScan.observedCampaigns);
+  const maxArtifacts = Math.max(...DATA.campaigns.map((campaign) => campaign.artifactCount));
+  const state = { filter: 'all', query: '', activeCampaign: DATA.campaigns[DATA.campaigns.length - 1].id, evidenceCampaign: 'all', evidenceKind: 'all', evidenceQuery: '' };
+  const confirmedRows = DATA.campaigns.flatMap((campaign) => campaign.samples.map((sample) => ({ kind: 'confirmed', campaign, ...sample })));
+  const observedRows = DATA.stagedScan.observedRows.map((row) => ({ kind: 'observed', campaign: DATA.campaigns.find((campaign) => campaign.id === row.campaign), name: row.pkg, version: row.version, ecosystem: 'npm', row: row.row, confidence: row.confidence }));
+  const allEvidence = [...confirmedRows, ...observedRows];
+
+  function init() {
+    renderHeroOrbit();
+    renderReceipts();
+    renderMetrics();
+    renderConstellation();
+    renderSelectedPanel();
+    renderTimeline();
+    renderTimelineList();
+    renderSurface();
+    renderCoverage();
+    renderProofHeatmap();
+    renderProofList();
+    renderPath();
+    renderEvidenceGroups();
+    renderEvidence();
+    renderActions();
+    renderSources();
+    bindEvents();
+    updateProgress();
+  }
+
+  function bindEvents() {
+    $('#theme-toggle').addEventListener('click', () => {
+      const next = document.documentElement.dataset.theme === 'dark' ? 'light' : 'dark';
+      document.documentElement.dataset.theme = next;
+      $('#theme-toggle').textContent = next === 'dark' ? 'Dark' : 'Light';
+      renderHeroOrbit();
+      renderConstellation();
+      renderTimeline();
+      renderProofHeatmap();
+    });
+    $('#atlas-search').addEventListener('input', (event) => {
+      state.query = event.target.value.trim();
+      renderConstellation();
+    });
+    $$('.chip').forEach((chip) => chip.addEventListener('click', () => {
+      state.filter = chip.dataset.filter;
+      $$('.chip').forEach((item) => item.setAttribute('aria-pressed', String(item === chip)));
+      renderConstellation();
+    }));
+    $('#atlas-reset').addEventListener('click', () => {
+      state.filter = 'all';
+      state.query = '';
+      $('#atlas-search').value = '';
+      $$('.chip').forEach((item) => item.setAttribute('aria-pressed', String(item.dataset.filter === 'all')));
+      renderConstellation();
+    });
+    $$('.tab-button').forEach((button) => button.addEventListener('click', () => {
+      state.evidenceKind = button.dataset.kind;
+      $$('.tab-button').forEach((item) => item.setAttribute('aria-pressed', String(item === button)));
+      renderEvidence();
+    }));
+    $('#evidence-search').addEventListener('input', (event) => {
+      state.evidenceQuery = event.target.value.trim();
+      renderEvidence();
+    });
+    $('#download-csv').addEventListener('click', downloadCsv);
+    $('#dialog-close').addEventListener('click', () => $('#detail-dialog').close());
+    window.addEventListener('scroll', updateProgress, { passive: true });
+    window.addEventListener('resize', updateProgress);
+  }
+
+  function renderHeroOrbit() {
+    const svg = $('#hero-orbit');
+    const w = 560, h = 420, cx = w / 2, cy = h / 2;
+    const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    svg.setAttribute('viewBox', '0 0 ' + w + ' ' + h);
+    svg.innerHTML = '<defs><radialGradient id="heroGlow"><stop offset="0%" stop-color="var(--teal)" stop-opacity=".9"/><stop offset="100%" stop-color="var(--teal)" stop-opacity="0"/></radialGradient></defs>' +
+      '<circle cx="' + cx + '" cy="' + cy + '" r="172" fill="none" stroke="var(--line)" stroke-dasharray="4 8"/>' +
+      '<circle cx="' + cx + '" cy="' + cy + '" r="104" fill="none" stroke="var(--line)" stroke-dasharray="3 7"/>' +
+      '<circle cx="' + cx + '" cy="' + cy + '" r="54" fill="url(#heroGlow)" opacity=".25"/>' +
+      '<circle cx="' + cx + '" cy="' + cy + '" r="17" fill="var(--teal)"/><text x="' + cx + '" y="' + (cy + 42) + '" text-anchor="middle" fill="var(--muted)" font-family="var(--font-mono)" font-size="12">registry artifact</text>' +
+      DATA.campaigns.map((campaign, index) => {
+        const angle = (Math.PI * 2 * index / DATA.campaigns.length) - Math.PI / 2;
+        const r = 118 + Math.sqrt(campaign.artifactCount) * 3.2;
+        const x = cx + Math.cos(angle) * r;
+        const y = cy + Math.sin(angle) * r;
+        const size = 5 + Math.sqrt(campaign.artifactCount) * .9;
+        const pulse = reduceMotion ? '' : '<animate attributeName="opacity" values=".55;1;.55" dur="' + (2.6 + index * .18) + 's" repeatCount="indefinite"/>';
+        return '<g><line x1="' + cx + '" y1="' + cy + '" x2="' + x + '" y2="' + y + '" stroke="var(--line)" opacity=".55"/><circle cx="' + x + '" cy="' + y + '" r="' + size + '" fill="' + campaign.color + '" opacity=".88">' + pulse + '</circle></g>';
+      }).join('');
+  }
+
+  function renderReceipts() {
+    const items = [
+      [DATA.scanner.trackedArtifacts, 'confirmed indicators'],
+      [DATA.campaigns.length, 'campaigns'],
+      [DATA.stagedScan.resolvedPairs, 'staged pairs'],
+      [DATA.stagedScan.observedHits, 'observed hits'],
+    ];
+    $('#receipt-grid').innerHTML = items.map(([value, label]) => '<div class="receipt"><b>' + fmt.format(value) + '</b><span>' + esc(label) + '</span></div>').join('');
+  }
+
+  function renderMetrics() {
+    const items = [
+      [DATA.scanner.trackedArtifacts, 'package-version indicators tracked by the scanner snapshot'],
+      [confirmedRows.length, 'representative confirmed indicators shown interactively'],
+      [DATA.stagedScan.observedCampaigns.length, 'campaigns observed in the staged package matrix'],
+      [DATA.stagedScan.rows, 'popular package/version rows staged for comparison'],
+    ];
+    $('#metric-strip').innerHTML = items.map(([value, label]) => '<article class="metric reveal"><strong>' + fmt.format(value) + '</strong><span>' + esc(label) + '</span></article>').join('');
+  }
+
+  function campaignPasses(campaign) {
+    const isObserved = observed.has(campaign.id);
+    if (state.filter === 'observed' && !isObserved) return false;
+    if (state.filter === 'confirmed-only' && isObserved) return false;
+    const q = state.query.toLowerCase();
+    if (!q) return true;
+    return [campaign.short, campaign.title, campaign.type, campaign.samples.map((sample) => sample.name + ' ' + sample.version).join(' ')].join(' ').toLowerCase().includes(q);
+  }
+
+  function campaignLayout() {
+    const w = 980, h = 650, cx = 490, cy = 330;
+    return DATA.campaigns.map((campaign, index) => {
+      const angle = (Math.PI * 2 * index / DATA.campaigns.length) - Math.PI / 2.1;
+      const radial = 170 + (Math.log1p(campaign.artifactCount) / Math.log1p(maxArtifacts)) * 160;
+      return { campaign, x: cx + Math.cos(angle) * radial, y: cy + Math.sin(angle) * radial, r: 18 + Math.sqrt(campaign.artifactCount) * 1.25, angle };
+    });
+  }
+
+  function renderConstellation() {
+    const svg = $('#constellation');
+    const w = 980, h = 650, cx = 490, cy = 330;
+    const layout = campaignLayout();
+    svg.setAttribute('viewBox', '0 0 ' + w + ' ' + h);
+    svg.innerHTML = '<defs><radialGradient id="core"><stop offset="0%" stop-color="var(--teal)" stop-opacity=".75"/><stop offset="100%" stop-color="var(--teal)" stop-opacity="0"/></radialGradient></defs>' +
+      '<circle cx="' + cx + '" cy="' + cy + '" r="86" fill="url(#core)" opacity=".35"/><circle cx="' + cx + '" cy="' + cy + '" r="24" fill="var(--teal)"/><text x="' + cx + '" y="' + (cy + 48) + '" text-anchor="middle" fill="var(--muted)" font-family="var(--font-mono)" font-size="13">npm registry artifact</text>' +
+      layout.map(({ campaign, x, y }) => '<path class="node-link" d="M ' + cx + ' ' + cy + ' Q ' + ((cx + x) / 2) + ' ' + ((cy + y) / 2 - 25) + ' ' + x + ' ' + y + '" fill="none" opacity="' + (campaignPasses(campaign) ? '.82' : '.12') + '"/>').join('') +
+      layout.map((item) => renderCampaignNode(item)).join('');
+    $$('.campaign-node', svg).forEach((node) => {
+      const campaign = DATA.campaigns.find((item) => item.id === node.dataset.campaign);
+      bindTooltip(node, '<strong>' + esc(campaign.short) + '</strong>' + fmt.format(campaign.artifactCount) + ' tracked artifacts<br>' + esc(campaign.type));
+      bindActivate(node, () => selectCampaign(campaign.id));
+    });
+    $$('.sample-node', svg).forEach((node) => {
+      const campaign = DATA.campaigns.find((item) => item.id === node.dataset.campaign);
+      const sample = campaign.samples[Number(node.dataset.sample)];
+      bindTooltip(node, '<strong>' + esc(sample.name + '@' + sample.version) + '</strong>' + esc(campaign.short) + ' confirmed indicator');
+      bindActivate(node, () => openIndicator(campaign, sample));
+    });
+  }
+
+  function renderCampaignNode({ campaign, x, y, r }) {
+    const visible = campaignPasses(campaign);
+    const active = state.activeCampaign === campaign.id;
+    const samples = campaign.samples.map((sample, index) => {
+      const angle = Math.PI * 2 * index / Math.max(1, campaign.samples.length);
+      const sx = x + Math.cos(angle) * (r + 18);
+      const sy = y + Math.sin(angle) * (r + 18);
+      return '<circle class="sample-node" tabindex="0" role="button" data-campaign="' + esc(campaign.id) + '" data-sample="' + index + '" cx="' + sx + '" cy="' + sy + '" r="5.5" fill="var(--paper)" stroke="' + campaign.color + '" stroke-width="2" opacity="' + (visible ? '.95' : '.1') + '"/>';
+    }).join('');
+    const labelX = x + (x > 490 ? r + 16 : -r - 16);
+    const anchor = x > 490 ? 'start' : 'end';
+    return '<g opacity="' + (visible ? '1' : '.14') + '">' + samples + '<g class="campaign-node" tabindex="0" role="button" data-campaign="' + esc(campaign.id) + '"><circle cx="' + x + '" cy="' + y + '" r="' + (r + (active ? 7 : 0)) + '" fill="' + campaign.color + '" opacity="' + (active ? '.98' : '.82') + '" stroke="var(--paper)" stroke-width="' + (active ? '5' : '2') + '"/><circle cx="' + x + '" cy="' + y + '" r="' + (r + 12) + '" fill="none" stroke="' + campaign.color + '" stroke-width="1.2" opacity="' + (active ? '.7' : '.2') + '"/></g><text x="' + labelX + '" y="' + (y - 5) + '" text-anchor="' + anchor + '" fill="var(--ink)" font-family="var(--font-ui)" font-weight="780" font-size="16">' + esc(campaign.short) + '</text><text x="' + labelX + '" y="' + (y + 15) + '" text-anchor="' + anchor + '" fill="var(--muted)" font-family="var(--font-mono)" font-size="12">' + fmt.format(campaign.artifactCount) + ' artifacts</text></g>';
+  }
+
+  function selectCampaign(id) {
+    state.activeCampaign = id;
+    state.evidenceCampaign = id;
+    renderConstellation();
+    renderSelectedPanel();
+    renderTimelineList();
+    renderEvidenceGroups();
+    renderEvidence();
+  }
+
+  function renderSelectedPanel() {
+    const campaign = DATA.campaigns.find((item) => item.id === state.activeCampaign) || DATA.campaigns[0];
+    const isObserved = observed.has(campaign.id);
+    $('#selected-panel').innerHTML = '<div class="selected-title"><div class="pill-row"><span class="pill hot">' + fmt.format(campaign.artifactCount) + ' tracked</span><span class="pill ' + (isObserved ? 'cool' : 'warn') + '">' + (isObserved ? 'observed staged hit' : 'confirmed only') + '</span></div><h3>' + esc(campaign.short) + '</h3><p>' + esc(campaign.summary) + '</p></div><div class="stat-grid"><div class="stat"><b>' + fmt.format(campaign.samples.length) + '</b><span>shown indicators</span></div><div class="stat"><b>' + esc(shortDate(campaign.published).replace(', 2026', '').replace(', 2025', '')) + '</b><span>advisory date</span></div></div><div><h3>Indicator samples</h3><div class="sample-list">' + campaign.samples.map((sample) => '<button class="sample-chip" type="button" style="--accent:' + campaign.color + '" data-name="' + esc(sample.name) + '" data-version="' + esc(sample.version) + '">' + esc(sample.name + '@' + sample.version) + '</button>').join('') + '</div></div><button class="button primary" type="button" id="open-selected">Open campaign details</button>';
+    $$('.sample-chip', $('#selected-panel')).forEach((chip) => {
+      const sample = campaign.samples.find((item) => item.name === chip.dataset.name && item.version === chip.dataset.version);
+      chip.addEventListener('click', () => openIndicator(campaign, sample));
+    });
+    $('#open-selected').addEventListener('click', () => openCampaign(campaign));
+  }
+
+  function renderTimeline() {
+    const svg = $('#timeline-chart');
+    const w = 1080, h = 520;
+    const pad = { left: 76, right: 104, top: 52, bottom: 74 };
+    const sorted = DATA.campaigns.slice().sort((a, b) => new Date(a.published) - new Date(b.published));
+    const dates = sorted.map((campaign) => new Date(campaign.published).getTime());
+    const min = Math.min(...dates) - 1000 * 60 * 60 * 24 * 22;
+    const max = Math.max(...dates) + 1000 * 60 * 60 * 24 * 32;
+    const x = (date) => pad.left + ((new Date(date).getTime() - min) / Math.max(1, max - min)) * (w - pad.left - pad.right);
+    svg.setAttribute('viewBox', '0 0 ' + w + ' ' + h);
+    svg.innerHTML = '<defs><linearGradient id="time-ribbon" x1="0" x2="1"><stop offset="0%" stop-color="var(--blue)"/><stop offset="48%" stop-color="var(--teal)"/><stop offset="100%" stop-color="var(--red)"/></linearGradient></defs>' +
+      '<path d="M ' + pad.left + ' ' + (h - pad.bottom) + ' C 330 ' + (h - pad.bottom - 46) + ', 600 ' + (h - pad.bottom + 36) + ', ' + (w - pad.right) + ' ' + (h - pad.bottom - 22) + '" fill="none" stroke="url(#time-ribbon)" stroke-width="6" stroke-linecap="round" opacity=".8"/>' +
+      '<text x="' + pad.left + '" y="32" fill="var(--muted)" font-family="var(--font-mono)" font-size="12">x-position = advisory time, circle size = tracked artifacts, rows keep close publish windows readable</text>' +
+      sorted.map((campaign, index) => {
+        const cx = x(campaign.published);
+        const cy = 92 + index * 48;
+        const r = 8 + Math.sqrt(campaign.artifactCount);
+        const labelW = 184;
+        const labelH = 42;
+        const placeLeft = cx > w - 390;
+        const labelX = placeLeft ? cx - r - labelW - 22 : cx + r + 22;
+        const labelY = cy - labelH / 2;
+        const connectorX = placeLeft ? labelX + labelW : labelX;
+        return '<g class="timeline-node" tabindex="0" role="button" data-campaign="' + esc(campaign.id) + '">' +
+          '<line x1="' + cx + '" y1="' + cy + '" x2="' + connectorX + '" y2="' + (labelY + labelH / 2) + '" stroke="var(--line)" stroke-dasharray="4 6"/>' +
+          '<line x1="' + cx + '" y1="' + cy + '" x2="' + cx + '" y2="' + (h - pad.bottom - 18) + '" stroke="var(--line)" stroke-dasharray="2 8" opacity=".55"/>' +
+          '<circle cx="' + cx + '" cy="' + cy + '" r="' + (r + 11) + '" fill="' + campaign.color + '" opacity=".12"/>' +
+          '<circle cx="' + cx + '" cy="' + cy + '" r="' + r + '" fill="' + campaign.color + '" opacity=".92" stroke="var(--panel)" stroke-width="3"/>' +
+          '<rect x="' + labelX + '" y="' + labelY + '" width="' + labelW + '" height="' + labelH + '" rx="15" fill="var(--panel-2)" stroke="' + campaign.color + '" stroke-opacity=".45"/>' +
+          '<text x="' + (labelX + 14) + '" y="' + (labelY + 18) + '" fill="var(--ink)" font-family="var(--font-ui)" font-weight="820" font-size="13">' + esc(campaign.short) + '</text>' +
+          '<text x="' + (labelX + 14) + '" y="' + (labelY + 34) + '" fill="var(--muted)" font-family="var(--font-mono)" font-size="10.5">' + esc(shortDate(campaign.published).replace(', 2026', '').replace(', 2025', '')) + ' / ' + fmt.format(campaign.artifactCount) + ' artifacts</text>' +
+        '</g>';
+      }).join('') +
+      [sorted[0], sorted[Math.floor(sorted.length / 2)], sorted[sorted.length - 1]].map((campaign, index) => '<text x="' + ([pad.left, w / 2, w - pad.right][index]) + '" y="' + (h - 28) + '" text-anchor="' + (index === 0 ? 'start' : index === 2 ? 'end' : 'middle') + '" fill="var(--muted)" font-family="var(--font-mono)" font-size="13">' + esc(shortDate(campaign.published)) + '</text>').join('');
+    $$('.timeline-node', svg).forEach((node) => {
+      const campaign = DATA.campaigns.find((item) => item.id === node.dataset.campaign);
+      bindTooltip(node, '<strong>' + esc(campaign.short) + '</strong>' + fmt.format(campaign.artifactCount) + ' tracked artifacts<br>' + esc(campaign.type));
+      bindActivate(node, () => selectCampaign(campaign.id));
+    });
+  }
+
+  function renderTimelineList() {
+    const sorted = DATA.campaigns.slice().sort((a, b) => new Date(a.published) - new Date(b.published));
+    $('#timeline-list').innerHTML = sorted.map((campaign) => '<button class="timeline-item" type="button" data-campaign="' + esc(campaign.id) + '" aria-pressed="' + (campaign.id === state.activeCampaign) + '"><b>' + esc(campaign.short) + '</b><span>' + esc(shortDate(campaign.published)) + ' / ' + fmt.format(campaign.artifactCount) + ' artifacts</span></button>').join('');
+    $$('.timeline-item').forEach((item) => item.addEventListener('click', () => selectCampaign(item.dataset.campaign)));
+  }
+
+  function renderSurface() {
+    const max = Math.max(...DATA.stagedScan.popularPackages.map((row) => row.maxCount));
+    const rows = DATA.stagedScan.popularPackages.slice().sort((a, b) => b.maxCount - a.maxCount);
+    $('#surface-bars').innerHTML = rows.map((row) => '<div class="bar-row"><span class="bar-name"><a class="text-link" href="' + esc(githubRepoUrl(row.repo)) + '" target="_blank" rel="noreferrer" title="Open GitHub repo ' + esc(row.repo) + '">' + esc(row.pkg) + '</a></span><span class="bar-track"><span class="bar-fill ' + (row.hits ? 'hit' : '') + '" style="--w:' + Math.round((row.maxCount / max) * 100) + '%"></span></span><span class="bar-count">' + fmt.format(row.maxCount) + (row.hits ? ' hit' : '') + '</span></div>').join('');
+  }
+
+  function renderCoverage() {
+    $('#coverage-grid').innerHTML = DATA.campaigns.map((campaign) => {
+      const hit = observed.has(campaign.id);
+      return '<article class="coverage"><strong>' + esc(campaign.short) + '</strong><div class="coverage-flags"><div class="flag on">confirmed</div><div class="flag ' + (hit ? 'hit' : '') + '">' + (hit ? 'observed' : 'not observed') + '</div></div></article>';
+    }).join('');
+  }
+
+  function heatmapRows() {
+    const groups = new Map();
+    observedRows.forEach((row) => {
+      const key = row.row || row.name + '@' + row.version;
+      if (!groups.has(key)) groups.set(key, { subjectRef: key, subject: parsePackageRef(key), hits: [] });
+      groups.get(key).hits.push(row);
+    });
+    return Array.from(groups.values());
+  }
+
+  function renderProofHeatmap() {
+    const svg = $('#proof-heatmap');
+    const rows = heatmapRows();
+    const campaigns = DATA.campaigns;
+    const cellW = 76, cellH = 34, gap = 7;
+    const left = 250, top = 96, right = 30, bottom = 72;
+    const w = left + campaigns.length * (cellW + gap) + right;
+    const h = top + rows.length * (cellH + gap) + bottom;
+    svg.setAttribute('viewBox', '0 0 ' + w + ' ' + h);
+    svg.innerHTML = '<defs><linearGradient id="heat-empty" x1="0" x2="1"><stop offset="0%" stop-color="var(--panel-3)"/><stop offset="100%" stop-color="var(--panel-2)"/></linearGradient></defs>' +
+      '<text x="20" y="35" class="heat-title">staged package/version subject</text>' +
+      '<text x="' + left + '" y="35" class="heat-title">confirmed campaign</text>' +
+      campaigns.map((campaign, index) => {
+        const x = left + index * (cellW + gap) + cellW / 2;
+        return '<g tabindex="0" role="button" class="heat-campaign" data-campaign="' + esc(campaign.id) + '"><text x="' + x + '" y="64" text-anchor="middle" class="heat-label">' + esc(heatLabel(campaign.short)) + '</text><circle cx="' + x + '" cy="80" r="4" fill="' + campaign.color + '"/></g>';
+      }).join('') +
+      rows.map((group, rowIndex) => {
+        const y = top + rowIndex * (cellH + gap);
+        return '<g><text x="20" y="' + (y + 21) + '" class="heat-title">' + esc(group.subjectRef) + '</text>' +
+          '<text x="20" y="' + (y + 37) + '" class="heat-label">' + group.hits.length + ' observed package-version ' + (group.hits.length === 1 ? 'hit' : 'hits') + '</text>' +
+          campaigns.map((campaign, colIndex) => {
+            const x = left + colIndex * (cellW + gap);
+            const hits = group.hits.filter((row) => row.campaign.id === campaign.id);
+            const strongest = hits.some((row) => row.confidence && row.confidence.includes('lockfile')) ? 'lockfile' : hits.length ? 'advisory' : 'none';
+            const fill = hits.length ? campaign.color : 'url(#heat-empty)';
+            const opacity = strongest === 'advisory' ? '.86' : strongest === 'lockfile' ? '.56' : '.24';
+            const label = hits.length ? hits.map((row) => row.name + '@' + row.version).join(', ') : 'No observed hit';
+            return '<rect class="heat-cell" tabindex="0" role="button" data-row="' + rowIndex + '" data-campaign="' + esc(campaign.id) + '" x="' + x + '" y="' + y + '" width="' + cellW + '" height="' + cellH + '" rx="10" fill="' + fill + '" opacity="' + opacity + '" stroke="var(--line)" aria-label="' + esc(group.subjectRef + ' versus ' + campaign.short + ': ' + label) + '"/>' +
+              (hits.length ? '<text x="' + (x + cellW / 2) + '" y="' + (y + 22) + '" text-anchor="middle" fill="var(--paper)" font-family="var(--font-mono)" font-size="12" font-weight="900">' + hits.length + '</text>' : '');
+          }).join('') + '</g>';
+      }).join('') +
+      '<text x="' + left + '" y="' + (h - 24) + '" class="heat-label">Click any colored cell for exact package URL, staged subject URL, and source advisory.</text>';
+    $$('.heat-cell', svg).forEach((cell) => {
+      const group = rows[Number(cell.dataset.row)];
+      const campaign = DATA.campaigns.find((item) => item.id === cell.dataset.campaign);
+      const hits = group.hits.filter((row) => row.campaign.id === campaign.id);
+      bindTooltip(cell, '<strong>' + esc(group.subjectRef + ' / ' + campaign.short) + '</strong>' + (hits.length ? hits.map((row) => esc(row.name + '@' + row.version)).join('<br>') : 'No observed staged hit'));
+      bindActivate(cell, () => openHeatCell(group, campaign, hits));
+    });
+    $$('.heat-campaign', svg).forEach((node) => {
+      const campaign = DATA.campaigns.find((item) => item.id === node.dataset.campaign);
+      bindTooltip(node, '<strong>' + esc(campaign.short) + '</strong>' + esc(campaign.title));
+      bindActivate(node, () => selectCampaign(campaign.id));
+    });
+  }
+
+  function renderProofList() {
+    $('#proof-list').innerHTML = observedRows.map((row) => {
+      const subject = parsePackageRef(row.row || row.name + '@' + row.version);
+      const stagedUrl = packageVersionUrl(subject.name, subject.version, 'npm');
+      const artifactUrl = packageVersionUrl(row.name, row.version, row.ecosystem || 'npm');
+      return '<article class="proof-card"><b>' + esc(row.name + '@' + row.version) + '</b><span>' + esc(row.campaign.short + ' / staged in ' + (row.row || 'advisory anchor')) + '</span><div class="proof-links"><a href="' + esc(artifactUrl) + '" target="_blank" rel="noreferrer">package versions</a><a href="' + esc(stagedUrl) + '" target="_blank" rel="noreferrer">staged package</a><a href="' + esc(row.campaign.source) + '" target="_blank" rel="noreferrer">source</a></div></article>';
+    }).join('');
+  }
+
+  function renderPath() {
+    const steps = [
+      ['Publish access', 'A token, maintainer account, or workflow can publish under a trusted package name.'],
+      ['Registry artifact', 'Consumers install an artifact, not an abstract reputation score.'],
+      ['Install location', 'Lockfile, cache, node_modules, global, or npx state changes the claim strength.'],
+      ['Machine authority', 'Install jobs often see CI, npm, GitHub, SSH, or cloud credentials.'],
+      ['Response', 'Remove affected installs, clear caches, verify artifacts, rotate exposed secrets.'],
+    ];
+    $('#path-map').innerHTML = steps.map(([title, text], index) => '<article class="path-step" data-step="' + (index + 1) + '"><b>' + esc(title) + '</b><span>' + esc(text) + '</span></article>').join('');
+  }
+
+  function renderEvidenceGroups() {
+    const items = [{ id: 'all', short: 'All evidence', artifactCount: allEvidence.length }, ...DATA.campaigns];
+    $('#evidence-groups').innerHTML = items.map((item) => '<button class="evidence-group" type="button" data-campaign="' + esc(item.id) + '" aria-pressed="' + (state.evidenceCampaign === item.id) + '"><b>' + esc(item.short) + '</b><span>' + fmt.format(item.artifactCount) + ' rows or tracked artifacts</span></button>').join('');
+    $$('.evidence-group').forEach((button) => button.addEventListener('click', () => {
+      state.evidenceCampaign = button.dataset.campaign;
+      renderEvidenceGroups();
+      renderEvidence();
+    }));
+  }
+
+  function evidencePasses(row) {
+    if (state.evidenceCampaign !== 'all' && row.campaign.id !== state.evidenceCampaign) return false;
+    if (state.evidenceKind === 'confirmed' && row.kind !== 'confirmed') return false;
+    if (state.evidenceKind === 'observed' && row.kind !== 'observed') return false;
+    const q = state.evidenceQuery.toLowerCase();
+    if (!q) return true;
+    return [row.kind, row.campaign.short, row.campaign.title, row.name, row.version, row.ecosystem, row.row || ''].join(' ').toLowerCase().includes(q);
+  }
+
+  function renderEvidence() {
+    const rows = allEvidence.filter(evidencePasses);
+    const campaign = DATA.campaigns.find((item) => item.id === state.evidenceCampaign);
+    $('#evidence-title').textContent = campaign ? campaign.short + ' evidence' : 'All evidence';
+    $('#evidence-subtitle').textContent = fmt.format(rows.length) + ' rows match the current view.';
+    $('#evidence-list').innerHTML = rows.length ? rows.map((row) => {
+      const artifactUrl = packageVersionUrl(row.name, row.version, row.ecosystem || 'npm');
+      const subject = row.row ? parsePackageRef(row.row) : null;
+      const subjectUrl = subject ? packageVersionUrl(subject.name, subject.version, 'npm') : '';
+      return '<article class="evidence-row"><div class="evidence-main"><span class="pill ' + (row.kind === 'confirmed' ? 'hot' : 'cool') + '">' + (row.kind === 'confirmed' ? 'confirmed indicator' : 'observed staged hit') + '</span><b>' + esc(row.name + '@' + row.version) + '</b><span>' + esc(row.campaign.short) + ' / ' + esc(row.row ? 'row: ' + row.row : row.campaign.type) + '</span><div class="evidence-links"><a href="' + esc(artifactUrl) + '" target="_blank" rel="noreferrer">package versions</a>' + (subjectUrl ? '<a href="' + esc(subjectUrl) + '" target="_blank" rel="noreferrer">staged package</a>' : '') + '<a href="' + esc(row.campaign.source) + '" target="_blank" rel="noreferrer">source</a></div></div><button class="button ghost" type="button" data-open="' + esc(row.campaign.id + '|' + row.name + '|' + row.version + '|' + (row.row || '')) + '">Open</button></article>';
+    }).join('') : '<article class="evidence-row"><div class="evidence-main"><b>No rows match this view</b><span>Try a different tab, campaign, or search term.</span></div></article>';
+    $$('[data-open]').forEach((button) => button.addEventListener('click', () => {
+      const [campaignId, name, version, subjectRef] = button.dataset.open.split('|');
+      const campaign = DATA.campaigns.find((item) => item.id === campaignId);
+      const evidence = allEvidence.find((item) => item.campaign.id === campaignId && item.name === name && item.version === version && (item.row || '') === (subjectRef || ''));
+      const sample = campaign.samples.find((item) => item.name === name && item.version === version) || { name, version, ecosystem: evidence?.ecosystem || 'npm', binaries: '' };
+      openIndicator(campaign, sample, evidence);
+    }));
+  }
+
+  function renderActions() {
+    $('#action-grid').innerHTML = DATA.actions.map((action) => '<article class="action reveal"><span class="pill cool">' + esc(action.stage) + '</span><h3>' + esc(action.title) + '</h3><p>' + esc(action.body) + '</p><p><a href="' + esc(action.source) + '" target="_blank" rel="noreferrer">Source</a></p></article>').join('');
+  }
+
+  function renderSources() {
+    $('#source-grid').innerHTML = DATA.sources.map((source) => '<article class="source reveal"><h3><a href="' + esc(source.url) + '" target="_blank" rel="noreferrer">' + esc(source.name) + '</a></h3><p>' + esc(source.detail) + '</p></article>').join('');
+  }
+
+  function openIndicator(campaign, sample, evidence) {
+    const artifactUrl = packageVersionUrl(sample.name, sample.version, sample.ecosystem || 'npm');
+    const subject = evidence?.row ? parsePackageRef(evidence.row) : null;
+    const subjectUrl = subject ? packageVersionUrl(subject.name, subject.version, 'npm') : '';
+    openDialog(sample.name + '@' + sample.version, '<dl><dt>Claim</dt><dd>' + (evidence?.kind === 'observed' ? 'Observed staged hit backed by an exact package-version row' : 'Confirmed advisory indicator in scanner snapshot') + '</dd><dt>Campaign</dt><dd>' + esc(campaign.title) + '</dd><dt>Published</dt><dd>' + esc(shortDate(campaign.published)) + '</dd><dt>Type</dt><dd>' + esc(campaign.type) + '</dd><dt>Ecosystem</dt><dd>' + esc(sample.ecosystem || 'npm') + '</dd><dt>Version in claim</dt><dd><code>' + esc(sample.name + '@' + sample.version) + '</code><br><a href="' + esc(artifactUrl) + '" target="_blank" rel="noreferrer">' + esc(artifactUrl) + '</a></dd>' + (subject ? '<dt>Staged subject</dt><dd><code>' + esc(evidence.row) + '</code><br><a href="' + esc(subjectUrl) + '" target="_blank" rel="noreferrer">' + esc(subjectUrl) + '</a></dd>' : '') + '<dt>Confidence</dt><dd>' + esc(evidence?.confidence || 'confirmed indicator') + '</dd><dt>Binary hint</dt><dd>' + esc(sample.binaries || 'none embedded') + '</dd><dt>Interpretation</dt><dd>This package-version is confirmed by the advisory snapshot. Some poisoned versions may be yanked, so the package link opens the stable package versions page while the exact version stays in the claim text.</dd><dt>Source</dt><dd><a href="' + esc(campaign.source) + '" target="_blank" rel="noreferrer">' + esc(campaign.source) + '</a></dd></dl>');
+  }
+
+  function openHeatCell(group, campaign, hits) {
+    const subjectUrl = packageVersionUrl(group.subject.name, group.subject.version, 'npm');
+    const body = hits.length ? '<p>This staged subject resolved one or more exact package-version indicators for ' + esc(campaign.short) + '.</p><dl><dt>Staged subject</dt><dd><code>' + esc(group.subjectRef) + '</code><br><a href="' + esc(subjectUrl) + '" target="_blank" rel="noreferrer">' + esc(subjectUrl) + '</a></dd><dt>Campaign</dt><dd>' + esc(campaign.title) + '</dd><dt>Observed hits</dt><dd>' + hits.map((row) => '<code>' + esc(row.name + '@' + row.version) + '</code> <a href="' + esc(packageVersionUrl(row.name, row.version, row.ecosystem || 'npm')) + '" target="_blank" rel="noreferrer">package versions</a> <span class="pill ' + (row.confidence && row.confidence.includes('lockfile') ? 'warn' : 'cool') + '">' + esc(row.confidence || 'observed') + '</span>').join('<br>') + '</dd><dt>Source</dt><dd><a href="' + esc(campaign.source) + '" target="_blank" rel="noreferrer">' + esc(campaign.source) + '</a></dd></dl>' : '<p>No observed staged hit was embedded for this row/campaign pair. That does not prove safety; it only means this staged scan did not produce that campaign indicator.</p><dl><dt>Staged subject</dt><dd><code>' + esc(group.subjectRef) + '</code><br><a href="' + esc(subjectUrl) + '" target="_blank" rel="noreferrer">' + esc(subjectUrl) + '</a></dd><dt>Campaign</dt><dd>' + esc(campaign.title) + '</dd><dt>Source</dt><dd><a href="' + esc(campaign.source) + '" target="_blank" rel="noreferrer">' + esc(campaign.source) + '</a></dd></dl>';
+    openDialog(group.subjectRef + ' x ' + campaign.short, body);
+  }
+
+  function openCampaign(campaign) {
+    openDialog(campaign.short, '<dl><dt>Title</dt><dd>' + esc(campaign.title) + '</dd><dt>Published</dt><dd>' + esc(shortDate(campaign.published)) + '</dd><dt>Tracked artifacts</dt><dd>' + fmt.format(campaign.artifactCount) + '</dd><dt>Observed staged hit</dt><dd>' + (observed.has(campaign.id) ? 'yes' : 'no') + '</dd><dt>Type</dt><dd>' + esc(campaign.type) + '</dd><dt>Summary</dt><dd>' + esc(campaign.summary) + '</dd><dt>Source</dt><dd><a href="' + esc(campaign.source) + '" target="_blank" rel="noreferrer">' + esc(campaign.source) + '</a></dd></dl>');
+  }
+
+  function openDialog(title, body) {
+    $('#dialog-title').textContent = title;
+    $('#dialog-body').innerHTML = body;
+    $('#detail-dialog').showModal();
+    $('#dialog-close').focus();
+  }
+
+  function bindTooltip(node, body) {
+    node.addEventListener('mouseenter', () => showTooltip(node, body));
+    node.addEventListener('focus', () => showTooltip(node, body));
+    node.addEventListener('mouseleave', hideTooltip);
+    node.addEventListener('blur', hideTooltip);
+  }
+
+  function showTooltip(node, body) {
+    const tooltip = $('#tooltip');
+    tooltip.innerHTML = body;
+    const rect = node.getBoundingClientRect();
+    tooltip.style.left = Math.min(innerWidth - 360, Math.max(12, rect.left)) + 'px';
+    tooltip.style.top = Math.min(innerHeight - 160, rect.bottom + 10) + 'px';
+    tooltip.classList.add('show');
+    tooltip.setAttribute('aria-hidden', 'false');
+  }
+
+  function hideTooltip() {
+    $('#tooltip').classList.remove('show');
+    $('#tooltip').setAttribute('aria-hidden', 'true');
+  }
+
+  function bindActivate(node, handler) {
+    node.addEventListener('click', handler);
+    node.addEventListener('keydown', (event) => {
+      if (event.key === 'Enter' || event.key === ' ') {
+        event.preventDefault();
+        handler();
+      }
+    });
+  }
+
+  function downloadCsv() {
+    const rows = [['claim', 'campaign', 'package', 'version', 'ecosystem', 'package_url', 'staged_ref', 'staged_url', 'source'], ...allEvidence.map((row) => {
+      const subject = row.row ? parsePackageRef(row.row) : null;
+      return [row.kind, row.campaign.short, row.name, row.version, row.ecosystem || 'npm', packageVersionUrl(row.name, row.version, row.ecosystem || 'npm'), row.row || '', subject ? packageVersionUrl(subject.name, subject.version, 'npm') : '', row.campaign.source];
+    })];
+    const csv = rows.map((line) => line.map((cell) => '"' + String(cell ?? '').replace(/"/g, '""') + '"').join(',')).join('\n');
+    const blob = new Blob([csv], { type: 'text/csv' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = 'supply-chain-attack-atlas.csv';
+    document.body.append(link);
+    link.click();
+    link.remove();
+    URL.revokeObjectURL(url);
+    $('#announcer').textContent = 'CSV downloaded.';
+  }
+
+  function updateProgress() {
+    const max = Math.max(1, document.documentElement.scrollHeight - innerHeight);
+    $('#progress').style.width = Math.min(100, Math.max(0, (scrollY / max) * 100)) + '%';
+  }
+
+  function shortDate(value) {
+    return dateFmt.format(new Date(value));
+  }
+
+  function parsePackageRef(ref) {
+    const text = String(ref || '');
+    const index = text.lastIndexOf('@');
+    if (index > 0) return { name: text.slice(0, index), version: text.slice(index + 1) };
+    return { name: text, version: '' };
+  }
+
+  function packageVersionUrl(name, version, ecosystem) {
+    if ((ecosystem || 'npm').toLowerCase() === 'pypi') {
+      return 'https://pypi.org/project/' + encodeURIComponent(name) + '/#history';
+    }
+    return 'https://www.npmjs.com/package/' + npmPackagePath(name) + '?activeTab=versions';
+  }
+
+  function npmPackagePath(name) {
+    const value = String(name || '');
+    if (value.startsWith('@')) {
+      const parts = value.slice(1).split('/');
+      return '@' + parts.map((part) => encodeURIComponent(part)).join('/');
+    }
+    return encodeURIComponent(value);
+  }
+
+  function githubRepoUrl(repo) {
+    return 'https://github.com/' + String(repo || '').replace(/^https:\/\/github\.com\//, '');
+  }
+
+  function heatLabel(value) {
+    return String(value).replace('Mini Shai-Hulud ', 'MS-H ').replace('Canister', 'Can');
+  }
+
+  function esc(value) {
+    return String(value ?? '').replace(/[&<>"']/g, (char) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[char]));
+  }
+
+  init();
+})();
+</script>
+</body>
+</html>
